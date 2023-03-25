@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "rootDir": ".",
+    "target": "ES5",
+    "lib": ["ESNext"],
+    "strict": true,
+    "pretty": true,
+    "newLine": "lf",
+    "strictNullChecks": true
+  }
+}

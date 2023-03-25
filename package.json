@@ -1,0 +1,33 @@
+{
+  "name": "@opensearch-project/opensearch",
+  "version": "1.0.0",
+  "description": "The official OpenSearch client for Node.js",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/timursaurus/opensearch-ts.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/timursaurus/opensearch-ts/issues"
+  },
+  "homepage": "https://github.com/timursaurus/opensearch-ts#readme",
+  "devDependencies": {
+    "@types/debug": "^4.1.7",
+    "vitest": "^0.29.7"
+  },
+  "dependencies": {
+    "debug": "^4.3.4",
+    "querystring": "^0.2.1",
+    "secure-json-parse": "^2.7.0"
+  }
+}
