@@ -17,9 +17,9 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-          cache: "pnpm"
-      - run: pnpm install
-      - run: pnpm lint
-      - run: pnpm test
-      - run: pnpm coverage && rm -rf coverage/tmp
+          cache: "yarn"
+      - run: yarn install
+      - run: yarn lint
+      - run: yarn test
+      - run: yarn coverage && rm -rf coverage/tmp
       - uses: codecov/codecov-action@v3
