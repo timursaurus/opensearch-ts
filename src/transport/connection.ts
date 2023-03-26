@@ -59,7 +59,7 @@ export class Connection {
   static roles: Record<string, string> = {
     CLUSTER_MANAGER: 'cluster_manager',
     /**
-     * @deprecated use CLUSTER_MANAGER instead
+     * @deprecated use `CLUSTER_MANAGER` instead
      */
     MASTER: 'master',
     DATA: 'data',
