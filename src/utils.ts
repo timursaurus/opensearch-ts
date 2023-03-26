@@ -27,8 +27,4 @@
  * under the License.
  */
 
-import { URL } from "node:url";
-import { EventEmitter } from "node:events";
-
-import Debug from "debug";
-const debug = Debug("opensearch:client");
+export function NOOP() {}

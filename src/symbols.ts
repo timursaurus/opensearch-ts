@@ -27,4 +27,22 @@
  * under the License.
  */
 
-export const kJsonOptions = Symbol('Secure JSON parse options');
+export const kJsonOptions = Symbol("opensearch:secure-json-parse-options");
+export const kClient = Symbol("opensearch:client");
+export const kMetaHeader = Symbol("opensearch:meta-header");
+export const kInitialOptions = Symbol("opensearch:initial-options");
+export const kChild = Symbol("opensearch:child");
+export const kExtensions = Symbol("opensearch:extensions");
+export const kEventEmitter = Symbol("opensearch:event-emitter");
+
+export const kCat = Symbol("opensearch:cat");
+export const kCluster = Symbol("opensearch:cluster");
+export const kDanglingIndices = Symbol("opensearch:dangling-indices");
+export const kFeatures = Symbol("opensearch:features");
+export const kIndices = Symbol("opensearch:indices");
+export const kIngest = Symbol("opensearch:ingest");
+export const kNodes = Symbol("opensearch:nodes");
+export const kShutdown = Symbol("opensearch:shutdown");
+export const kSnapshot = Symbol("opensearch:snapshot");
+export const kTasks = Symbol("opensearch:tasks");
+export const kConfigurationError = Symbol("opensearch:configuration-error");
