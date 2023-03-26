@@ -59,7 +59,7 @@ export class CatImpl {
   nodes() {}
 
   pendingTasks() {}
-  //get pending_tasks() {}
+  // get pending_tasks() {}
 
   plugins() {}
 

@@ -56,21 +56,19 @@ export class PingImpl {
   ping(params: PingRequest, options: TransportRequestOptions, callback) {
     [params, options, callback] = normalizeArguments(params, options, callback);
 
-    let { method, body, ...querystring } = params;
+    const { ...querystring } = params;
     const path = "/";
-    if (method == null) {
-      method = "HEAD";
-    }
+    const method = "HEAD";
+    const body = null;
 
     const request = {
-      method:'HEAD',
+      method,
       path,
-      body: null,
+      body,
       querystring,
-    }
-
+    };
+    // return this.transport.request(request, options, callback)
     return this.transport;
   }
 }
-
 export default PingImpl;

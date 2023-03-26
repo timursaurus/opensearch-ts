@@ -27,16 +27,14 @@
  * under the License.
  */
 
-import { URL } from 'node:url';
-import type { SecureContextOptions } from 'node:tls';
+import { URL } from "node:url";
+import type { SecureContextOptions } from "node:tls";
 
-import { NOOP } from '@/utils';
-import Debug from 'debug';
+import Debug from "debug";
+import { NOOP } from "@/utils";
 
-const debug = Debug('opensearch:pool:base');
+const debug = Debug("opensearch:pool:base-connection");
 
-export class BaseConnectionPool {
-
-}
+export class BaseConnectionPool {}
 
 export default BaseConnectionPool;

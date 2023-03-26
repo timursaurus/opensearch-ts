@@ -27,11 +27,11 @@
  * under the License.
  */
 
+import { stringify } from "node:querystring";
 import Debug from "debug";
 import sjson from "secure-json-parse";
-import { stringify } from "querystring";
-import { kJsonOptions } from "../symbols";
-import { DeserializationError, SerializationError } from "../errors";
+import { kJsonOptions } from "@/symbols";
+import { DeserializationError, SerializationError } from "@/errors";
 
 const debug = Debug("opensearch:transport:serializer");
 
@@ -42,8 +42,9 @@ export interface SerializerOptions {
 export class Serializer {
   [kJsonOptions]: {
     protoAction: "error" | "ignore";
-    constructorAction: "ignore" | "error";
+    constructorAction: "error" | "ignore";
   };
+
   constructor(options?: SerializerOptions) {
     const disable = options?.disablePrototypePoisoningProtection ?? false;
     this[kJsonOptions] = {
@@ -52,6 +53,7 @@ export class Serializer {
         disable === true || disable === "constructor" ? "ignore" : "error",
     };
   }
+
   serialize(payload: Record<string, unknown>): string {
     debug("Serializing ", payload);
     let serialized: string;
@@ -85,7 +87,7 @@ export class Serializer {
         payload
       );
     }
-    let output: string = "";
+    let output = "";
     for (let i = 0, len = payload.length; i < len; i++) {
       if (typeof payload[i] === "string") {
         output += payload[i] + "\n";
@@ -99,8 +101,12 @@ export class Serializer {
 
   qserialize(object?: Record<string, unknown> | string): string {
     debug("QSerializing ", object);
-    if (object == null) return "";
-    if (typeof object === "string") return object;
+    if (object == null) {
+      return "";
+    }
+    if (typeof object === "string") {
+      return object;
+    }
     const keys = Object.keys(object);
     for (let i = 0, len = keys.length; i < len; i++) {
       const key = keys[i];
