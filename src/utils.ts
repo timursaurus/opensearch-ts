@@ -26,17 +26,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { RequestBase } from "./types/internal";
 
-import { URL } from "node:url";
-import { EventEmitter } from "node:events";
+export function NOOP() {}
 
-import Debug from "debug";
-import { ClientOptions } from "./types/client";
-import { OpenSearchAPI } from "@/api";
-const debug = Debug("opensearch:client");
-
-export class Client extends OpenSearchAPI {
-  // constructor(options: ClientOptions) {
-  //   super(options);
-  // }
+export function normalizeArguments(params: RequestBase, options, callback) {
+  if (typeof options === "function") {
+    callback = options;
+    options = {};
+  }
+  if (typeof params === "function" || params == null) {
+    callback = params;
+    params = {};
+    options = {};
+  }
+  return [params, options, callback];
 }

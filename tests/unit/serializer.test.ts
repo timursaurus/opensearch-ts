@@ -1,6 +1,5 @@
+import { stringify } from "node:querystring";
 import { test } from "vitest";
-import { stringify } from "querystring";
-
 import { DeserializationError, SerializationError } from "@/errors";
 import { Serializer } from "@/transport";
 
@@ -52,7 +51,6 @@ test("qserialize (array)", (t) => {
     hello: "world",
     arr: ["foo", "bar"],
   };
-
   t.expect(s.qserialize(obj)).toBe("hello=world&arr=foo%2Cbar");
 });
 
@@ -62,7 +60,6 @@ test("qserialize (string)", (t) => {
     hello: "world",
     you_know: "for search",
   };
-
   t.expect(s.qserialize(stringify(obj))).toBe(stringify(obj));
 });
 
@@ -83,8 +80,8 @@ test("SerializationError", (t) => {
   try {
     s.serialize(obj);
     throw new Error("Should fail");
-  } catch (err) {
-    t.expect(err).toBeInstanceOf(SerializationError);
+  } catch (error) {
+    t.expect(error).toBeInstanceOf(SerializationError);
   }
 });
 
@@ -94,8 +91,8 @@ test("SerializationError ndserialize", (t) => {
     // @ts-expect-error
     s.ndserialize({ hello: "world" });
     throw new Error("Should fail");
-  } catch (err) {
-    t.expect(err).toBeInstanceOf(SerializationError);
+  } catch (error) {
+    t.expect(error).toBeInstanceOf(SerializationError);
   }
 });
 
@@ -105,8 +102,8 @@ test("DeserializationError", (t) => {
   try {
     s.deserialize(json);
     throw new Error("Should fail");
-  } catch (err) {
-    t.expect(err).toBeInstanceOf(DeserializationError);
+  } catch (error) {
+    t.expect(error).toBeInstanceOf(DeserializationError);
   }
 });
 
@@ -115,14 +112,14 @@ test("prototype poisoning protection", (t) => {
   try {
     s.deserialize('{"__proto__":{"foo":"bar"}}');
     throw new Error("Should fail");
-  } catch (err) {
-    t.expect(err).toBeInstanceOf(DeserializationError);
+  } catch (error) {
+    t.expect(error).toBeInstanceOf(DeserializationError);
   }
   try {
     s.deserialize('{"constructor":{"prototype":{"foo":"bar"}}}');
     throw new Error("Should fail");
-  } catch (err) {
-    t.expect(err).toBeInstanceOf(DeserializationError);
+  } catch (error) {
+    t.expect(error).toBeInstanceOf(DeserializationError);
   }
 });
 
@@ -131,14 +128,14 @@ test("disable prototype poisoning protection", (t) => {
   try {
     const result = s.deserialize('{"__proto__":{"foo":"bar"}}');
     t.expect(result).toBeInstanceOf(Object);
-  } catch (err) {
+  } catch {
     throw new Error("Should not fail");
   }
 
   try {
     const result = s.deserialize('{"constructor":{"prototype":{"foo":"bar"}}}');
     t.expect(result).toBeInstanceOf(Object);
-  } catch (err) {
+  } catch {
     throw new Error("Should not fail");
   }
 });
@@ -148,15 +145,15 @@ test("disable prototype poisoning protection only for proto", (t) => {
   try {
     const result = s.deserialize('{"__proto__":{"foo":"bar"}}');
     t.expect(result).toBeInstanceOf(Object);
-  } catch (err) {
+  } catch {
     throw new Error("Should not fail");
   }
 
   try {
     s.deserialize('{"constructor":{"prototype":{"foo":"bar"}}}');
     throw new Error("Should fail");
-  } catch (err) {
-    t.expect(err).toBeInstanceOf(DeserializationError);
+  } catch (error) {
+    t.expect(error).toBeInstanceOf(DeserializationError);
   }
 });
 
@@ -167,14 +164,14 @@ test("disable prototype poisoning protection only for constructor", (t) => {
   try {
     s.deserialize('{"__proto__":{"foo":"bar"}}');
     throw new Error("Should fail");
-  } catch (err) {
-    t.expect(err).toBeInstanceOf(DeserializationError);
+  } catch (error) {
+    t.expect(error).toBeInstanceOf(DeserializationError);
   }
 
   try {
     const result = s.deserialize('{"constructor":{"prototype":{"foo":"bar"}}}');
     t.expect(result).toBeInstanceOf(Object);
-  } catch (err) {
+  } catch {
     throw new Error("Should not fail");
   }
 });

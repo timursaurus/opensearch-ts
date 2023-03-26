@@ -27,16 +27,9 @@
  * under the License.
  */
 
-import { URL } from "node:url";
+import buffer from "node:buffer";
+import os from "node:os";
+import v8 from "node:v8";
 import { EventEmitter } from "node:events";
 
-import Debug from "debug";
-import { ClientOptions } from "./types/client";
-import { OpenSearchAPI } from "@/api";
-const debug = Debug("opensearch:client");
-
-export class Client extends OpenSearchAPI {
-  // constructor(options: ClientOptions) {
-  //   super(options);
-  // }
-}
+export class Transport {}

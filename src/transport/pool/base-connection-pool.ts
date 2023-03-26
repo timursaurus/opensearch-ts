@@ -28,15 +28,13 @@
  */
 
 import { URL } from "node:url";
-import { EventEmitter } from "node:events";
+import type { SecureContextOptions } from "node:tls";
 
 import Debug from "debug";
-import { ClientOptions } from "./types/client";
-import { OpenSearchAPI } from "@/api";
-const debug = Debug("opensearch:client");
+import { NOOP } from "@/utils";
 
-export class Client extends OpenSearchAPI {
-  // constructor(options: ClientOptions) {
-  //   super(options);
-  // }
-}
+const debug = Debug("opensearch:pool:base-connection");
+
+export class BaseConnectionPool {}
+
+export default BaseConnectionPool;

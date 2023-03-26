@@ -27,16 +27,12 @@
  * under the License.
  */
 
-import { URL } from "node:url";
-import { EventEmitter } from "node:events";
+import { Readable } from "node:stream";
+import { promisify } from "node:util";
 
-import Debug from "debug";
-import { ClientOptions } from "./types/client";
-import { OpenSearchAPI } from "@/api";
-const debug = Debug("opensearch:client");
+import { NOOP } from "@/utils";
 
-export class Client extends OpenSearchAPI {
-  // constructor(options: ClientOptions) {
-  //   super(options);
-  // }
-}
+const pImmediate = promisify(setImmediate);
+const sleep = promisify(setTimeout);
+
+export class Helpers {}

@@ -27,16 +27,58 @@
  * under the License.
  */
 
-import { URL } from "node:url";
-import { EventEmitter } from "node:events";
+import { Transport } from "@/transport";
+export class CatImpl {
+  constructor(protected transport: Transport) {
+    this.transport = transport;
+  }
 
-import Debug from "debug";
-import { ClientOptions } from "./types/client";
-import { OpenSearchAPI } from "@/api";
-const debug = Debug("opensearch:client");
+  aliases() {}
 
-export class Client extends OpenSearchAPI {
-  // constructor(options: ClientOptions) {
-  //   super(options);
-  // }
+  allocation() {}
+
+  count() {}
+
+  fielddata() {}
+
+  health() {}
+
+  help() {}
+
+  indices() {}
+
+  cluster_manager() {}
+
+  /**
+   * @deprecated use `cat.cluster_manager` instead
+   */
+  master() {}
+
+  nodeattrs() {}
+
+  nodes() {}
+
+  pendingTasks() {}
+  // get pending_tasks() {}
+
+  plugins() {}
+
+  recovery() {}
+
+  repositories() {}
+
+  segments() {}
+
+  shards() {}
+
+  snapshots() {}
+
+  tasks() {}
+
+  templates() {}
+
+  threadPool() {}
+  // get thread_pool() { return this.threadPool }
 }
+
+export default CatImpl;

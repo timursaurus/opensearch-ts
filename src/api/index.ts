@@ -27,16 +27,17 @@
  * under the License.
  */
 
-import { URL } from "node:url";
-import { EventEmitter } from "node:events";
+import { BulkImpl, CatImpl, PingImpl } from "./internal";
+import { Serializer, Transport } from "@/transport";
+import { ClientOptions } from "@/types/client";
 
-import Debug from "debug";
-import { ClientOptions } from "./types/client";
-import { OpenSearchAPI } from "@/api";
-const debug = Debug("opensearch:client");
-
-export class Client extends OpenSearchAPI {
-  // constructor(options: ClientOptions) {
-  //   super(options);
-  // }
+export class OpenSearchAPI {
+  cat: CatImpl;
+  bulk: BulkImpl["bulk"];
+  ping: PingImpl["ping"];
+  constructor(options: ClientOptions) {
+    this.cat = new CatImpl(options.Transport);
+    this.bulk = new BulkImpl(options.Transport).bulk;
+    this.ping = new PingImpl(options.Transport).ping;
+  }
 }

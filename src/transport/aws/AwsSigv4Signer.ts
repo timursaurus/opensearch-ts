@@ -17,7 +17,7 @@
  * not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -27,16 +27,22 @@
  * under the License.
  */
 
-import { URL } from "node:url";
-import { EventEmitter } from "node:events";
+import crypto from "node:crypto";
+import aws4 from "aws4";
+import { OpenSearchClientError } from "../../errors";
 
-import Debug from "debug";
-import { ClientOptions } from "./types/client";
-import { OpenSearchAPI } from "@/api";
-const debug = Debug("opensearch:client");
-
-export class Client extends OpenSearchAPI {
-  // constructor(options: ClientOptions) {
-  //   super(options);
-  // }
+// <
+//   TResponse = Record<string, unknown>,
+//   TContext = Context
+// >
+export class AwsSigv4SignerError extends OpenSearchClientError {
+  message: string;
+  data;
+  constructor(message: string, data?: string) {
+    super(message);
+    Error.captureStackTrace(this, AwsSigv4SignerError);
+    this.name = "AwsSigv4SignerError";
+    this.message = message ?? "AwsSigv4Signer Error";
+    this.data = data;
+  }
 }
