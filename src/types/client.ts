@@ -28,8 +28,12 @@
  */
 
 import { Serializer } from "@/transport";
-import { MemoryCircuitBreakerOptions } from "@/types/transport";
+import { APIError, APIResponse, MemoryCircuitBreakerOptions } from "@/types/transport";
 
+export type CallbackFn<TResponse, TContext> = (
+  error: APIError,
+  result: APIResponse<TResponse, TContext>
+) => void;
 export interface ClientOptions {
   node?: string | string[] | NodeOptions | NodeOptions[];
   nodes?: string | string[] | NodeOptions | NodeOptions[];
@@ -44,9 +48,9 @@ export interface ClientOptions {
   sniffOnStart?: boolean;
   sniffEndpoint?: string;
   sniffOnConnectionFault?: boolean;
-  resurrectStrategy?: 'ping' | 'optimistic' | 'none';
+  resurrectStrategy?: "ping" | "optimistic" | "none";
   suggestCompression?: boolean;
-  compression?: 'gzip';
+  compression?: "gzip";
   ssl?: TlsConnectionOptions;
   agent?: AgentOptions | agentFn | false;
   nodeFilter?: nodeFilterFn;
@@ -65,6 +69,6 @@ export interface ClientOptions {
     username?: string;
     password?: string;
   };
-  disablePrototypePoisoningProtection?: boolean | 'proto' | 'constructor';
+  disablePrototypePoisoningProtection?: boolean | "proto" | "constructor";
   memoryCircuitBreaker?: MemoryCircuitBreakerOptions;
 }

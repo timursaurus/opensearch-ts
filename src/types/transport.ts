@@ -42,11 +42,37 @@ export type APIError =
   | errors.RequestAbortedError
   | errors.NotCompatibleError;
 
+export interface APIResponse<TResponse = Record<string, unknown>, TContext = Context>
+  extends RequestEvent<TResponse, TContext> {}
+
 export type Context = unknown;
 
 export interface MemoryCircuitBreakerOptions {
   enabled: boolean;
   maxPercentage: number;
+}
+
+export interface RequestEvent<TResponse = Record<string, any>, TContext = Context> {
+  body: TResponse;
+  statusCode: number | null;
+  headers: Record<string, any> | null;
+  warnings: string[] | null;
+  meta: {
+    context: TContext;
+    name: string | symbol;
+    request: {
+      params: TransportRequestParams;
+      options: TransportRequestOptions;
+      id: any;
+    };
+    connection: Connection;
+    attempts: number;
+    aborted: boolean;
+    sniff?: {
+      hosts: any[];
+      reason: string;
+    };
+  };
 }
 
 export interface TransportGetConnectionOptions {

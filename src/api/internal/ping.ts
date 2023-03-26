@@ -27,58 +27,50 @@
  * under the License.
  */
 
+// ping<TContext = unknown>(
+//   params?: T.PingRequest,
+//   options?: TransportRequestOptions
+// ): TransportRequestPromise<ApiResponse<T.PingResponse, TContext>>;
+// ping<TContext = unknown>(
+//   callback: callbackFn<T.PingResponse, TContext>
+// ): TransportRequestCallback;
+// ping<TContext = unknown>(
+//   params: T.PingRequest,
+//   callback: callbackFn<T.PingResponse, TContext>
+// ): TransportRequestCallback;
+// ping<TContext = unknown>(
+//   params: T.PingRequest,
+//   options: TransportRequestOptions,
+//   callback: callbackFn<T.PingResponse, TContext>
+// ): TransportRequestCallback;
+
 import { Transport } from "@/transport";
-export class CatImpl {
+import { PingRequest } from "@/types/internal";
+import { normalizeArguments } from "@/utils";
+
+export class PingImpl {
   constructor(protected transport: Transport) {
     this.transport = transport;
   }
 
-  aliases() {}
+  ping(params: PingRequest, options: TransportRequestOptions, callback) {
+    [params, options, callback] = normalizeArguments(params, options, callback);
 
-  allocation() {}
+    let { method, body, ...querystring } = params;
+    const path = "/";
+    if (method == null) {
+      method = "HEAD";
+    }
 
-  count() {}
+    const request = {
+      method:'HEAD',
+      path,
+      body: null,
+      querystring,
+    }
 
-  fielddata() {}
-
-  health() {}
-
-  help() {}
-
-  indices() {}
-
-  cluster_manager() {}
-
-  /**
-   * @deprecated use `cat.cluster_manager` instead
-   */
-  master() {}
-
-  nodeattrs() {}
-
-  nodes() {}
-
-  pendingTasks() {}
-  //get pending_tasks() {}
-
-  plugins() {}
-
-  recovery() {}
-
-  repositories() {}
-
-  segments() {}
-
-  shards() {}
-
-  snapshots() {}
-
-  tasks() {}
-
-  templates() {}
-
-  threadPool() {}
-  // get thread_pool() { return this.threadPool }
+    return this.transport;
+  }
 }
 
-export default CatImpl;
+export default PingImpl;

@@ -29,3 +29,4 @@
 
 export * from './bulk'
 export * from './cat'
+export * from './ping'
