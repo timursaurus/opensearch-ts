@@ -30,9 +30,8 @@
 import Debug from "debug";
 import sjson from "secure-json-parse";
 import { stringify } from "querystring";
-
-import { kJsonOptions } from "@/symbols";
-import { DeserializationError, SerializationError } from "@/errors";
+import { kJsonOptions } from "../symbols";
+import { DeserializationError, SerializationError } from "../errors";
 
 const debug = Debug("opensearch:transport:serializer");
 
