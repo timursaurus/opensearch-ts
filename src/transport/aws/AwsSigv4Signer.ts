@@ -31,7 +31,6 @@ import crypto from "node:crypto";
 import aws4 from "aws4";
 import { OpenSearchClientError } from "../../errors";
 
-
 // <
 //   TResponse = Record<string, unknown>,
 //   TContext = Context
@@ -42,8 +41,8 @@ export class AwsSigv4SignerError extends OpenSearchClientError {
   constructor(message: string, data?: string) {
     super(message);
     Error.captureStackTrace(this, AwsSigv4SignerError);
-    this.name = 'AwsSigv4SignerError';
-    this.message = message ?? 'AwsSigv4Signer Error';
-    this.data = data
+    this.name = "AwsSigv4SignerError";
+    this.message = message ?? "AwsSigv4Signer Error";
+    this.data = data;
   }
 }

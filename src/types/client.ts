@@ -28,7 +28,11 @@
  */
 
 import { Serializer } from "@/transport";
-import { APIError, APIResponse, MemoryCircuitBreakerOptions } from "@/types/transport";
+import {
+  APIError,
+  APIResponse,
+  MemoryCircuitBreakerOptions,
+} from "@/types/transport";
 
 export type CallbackFn<TResponse, TContext> = (
   error: APIError,

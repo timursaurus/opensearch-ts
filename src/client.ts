@@ -31,4 +31,12 @@ import { URL } from "node:url";
 import { EventEmitter } from "node:events";
 
 import Debug from "debug";
+import { ClientOptions } from "./types/client";
+import { OpenSearchAPI } from "@/api";
 const debug = Debug("opensearch:client");
+
+export class Client extends OpenSearchAPI {
+  // constructor(options: ClientOptions) {
+  //   super(options);
+  // }
+}

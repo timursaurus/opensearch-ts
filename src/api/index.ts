@@ -27,35 +27,17 @@
  * under the License.
  */
 
-import { Serializer, Transport } from '@/transport'
-import { ClientOptions } from '@/types/client'
-import { BulkImpl, CatImpl, PingImpl } from './internal'
-
+import { BulkImpl, CatImpl, PingImpl } from "./internal";
+import { Serializer, Transport } from "@/transport";
+import { ClientOptions } from "@/types/client";
 
 export class OpenSearchAPI {
-  cat: CatImpl
-  bulk: BulkImpl['bulk']
-  ping: PingImpl['ping']
-  constructor (options: ClientOptions) {
-    this.cat = new CatImpl(options.Transport)
-    this.bulk = new BulkImpl(options.Transport).bulk
-    this.ping = new PingImpl(options.Transport).ping
+  cat: CatImpl;
+  bulk: BulkImpl["bulk"];
+  ping: PingImpl["ping"];
+  constructor(options: ClientOptions) {
+    this.cat = new CatImpl(options.Transport);
+    this.bulk = new BulkImpl(options.Transport).bulk;
+    this.ping = new PingImpl(options.Transport).ping;
   }
 }
-
-class Client extends OpenSearchAPI {
-  // serializer: Serializer
-  constructor (options: ClientOptions) {
-    super(options)
-    // this.serializer = new options.Serializer({
-
-    // })
-  }
-}
-
-const client = new Client({})
-
-
-
-
-

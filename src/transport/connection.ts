@@ -42,7 +42,7 @@ const debug = Debug("opensearch:transport:connection");
 
 export class Connection {
   url: URL;
-  ssl: TlsConnectionOptions | null,
+  // ssl: TlsConnectionOptions | null,
   id: string;
   headers: Record<string, string>;
   // roles
@@ -50,23 +50,28 @@ export class Connection {
   resurrectTimeout: number;
   makeRequest: typeof http.request | typeof https.request;
   openRequests: number;
-  status: string
-  agent: http.Agent | https.Agent | hpagent.HttpProxyAgent | hpagent.HttpsProxyAgent;
+  status: string;
+  agent:
+    | http.Agent
+    | https.Agent
+    | hpagent.HttpProxyAgent
+    | hpagent.HttpsProxyAgent;
+
   static statuses: Record<string, string> = {
-    ALIVE: 'alive',
-    DEAD: 'dead',
+    ALIVE: "alive",
+    DEAD: "dead",
   };
+
   static roles: Record<string, string> = {
-    CLUSTER_MANAGER: 'cluster_manager',
+    CLUSTER_MANAGER: "cluster_manager",
     /**
      * @deprecated use `CLUSTER_MANAGER` instead
      */
-    MASTER: 'master',
-    DATA: 'data',
-    INGEST: 'ingest',
+    MASTER: "master",
+    DATA: "data",
+    INGEST: "ingest",
   };
-  constructor(options) {
+  // constructor(options) {
 
-  }
-
+  // }
 }

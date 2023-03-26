@@ -26,5 +26,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { RequestBase } from "./types/internal";
 
 export function NOOP() {}
+
+export function normalizeArguments(params: RequestBase, options, callback) {
+  if (typeof options === "function") {
+    callback = options;
+    options = {};
+  }
+  if (typeof params === "function" || params == null) {
+    callback = params;
+    params = {};
+    options = {};
+  }
+  return [params, options, callback];
+}

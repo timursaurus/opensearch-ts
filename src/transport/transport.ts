@@ -27,11 +27,9 @@
  * under the License.
  */
 
-import buffer from 'node:buffer';
-import os from 'node:os';
-import v8 from 'node:v8';
-import { EventEmitter } from 'node:events';
+import buffer from "node:buffer";
+import os from "node:os";
+import v8 from "node:v8";
+import { EventEmitter } from "node:events";
 
-export class Transport {
-
-}
+export class Transport {}

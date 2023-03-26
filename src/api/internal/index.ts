@@ -27,6 +27,6 @@
  * under the License.
  */
 
-export * from './bulk'
-export * from './cat'
-export * from './ping'
+export * from "./bulk";
+export * from "./cat";
+export * from "./ping";

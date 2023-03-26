@@ -34,7 +34,7 @@ export class OpenSearchClientError extends Error {
   name: string;
   constructor(message: string) {
     super(message);
-    this.name = 'OpenSearchClientError';
+    this.name = "OpenSearchClientError";
   }
 }
 
@@ -96,8 +96,8 @@ export class SerializationError extends OpenSearchClientError {
   constructor(message: string, data: Record<string, unknown>) {
     super(message);
     Error.captureStackTrace(this, SerializationError);
-    this.name = 'SerializationError';
-    this.message = message ?? 'Serialization Error';
+    this.name = "SerializationError";
+    this.message = message ?? "Serialization Error";
     this.data = data;
   }
 }
@@ -109,8 +109,8 @@ export class DeserializationError extends OpenSearchClientError {
   constructor(message: string, data: string) {
     super(message);
     Error.captureStackTrace(this, DeserializationError);
-    this.name = 'DeserializationError';
-    this.message = message ?? 'Deserialization Error';
+    this.name = "DeserializationError";
+    this.message = message ?? "Deserialization Error";
     this.data = data;
   }
 }

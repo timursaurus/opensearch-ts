@@ -28,18 +28,19 @@
  */
 
 import { Transport } from "@/transport";
-import { CallbackFn } from "@/types/client";
-import { BulkRequest, BulkResponse } from "@/types/internal";
+import type { CallbackFn } from "@/types/client";
+import type { BulkRequest, BulkResponse } from "@/types/internal";
 
 export class BulkImpl {
   constructor(protected transport: Transport) {
     this.transport = transport;
   }
+
   /**
    * The bulk operation lets you add, update, or delete many documents in a single request.
    * Compared to individual OpenSearch indexing requests, the bulk operation has significant performance benefits.
    * Whenever practical, we recommend batching indexing operations into bulk requests.
-   * <br/> See Also: {@link https://opensearch.org/docs/latest/api-reference/document-apis/bulk/|OpenSearch - Bulk}
+   * <br/> See Also: {@link https://opensearch.org/docs/latest/api-reference/document-apis/bulk/ | OpenSearch - Bulk}
    *
    * @memberOf API-Document
    * @param params
@@ -50,10 +51,12 @@ export class BulkImpl {
     params: BulkRequest<TSource>,
     options: TransportRequestOptions
   ): TransportRequestPromise;
+
   bulk<TSource = unknown, TContext = unknown>(
     params: BulkRequest<TSource>,
     callback: CallbackFn<BulkResponse, TContext>
   ): TransportRequestCallback;
+
   bulk<TSource = unknown, TContext = unknown>(
     params: BulkRequest<TSource>,
     options: TransportRequestOptions,
