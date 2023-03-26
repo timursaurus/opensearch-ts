@@ -8,6 +8,8 @@
  *
  */
 
+import { Transport } from "@/transport";
+
 /*
  * Licensed to Elasticsearch B.V. under one or more contributor
  * license agreements. See the NOTICE file distributed with
@@ -17,7 +19,7 @@
  * not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -27,23 +29,10 @@
  * under the License.
  */
 
-import crypto from "node:crypto";
-import aws4 from "aws4";
-import { OpenSearchClientError } from "../../errors";
-
-
-// <
-//   TResponse = Record<string, unknown>,
-//   TContext = Context
-// >
-export class AwsSigv4SignerError extends OpenSearchClientError {
-  message: string;
-  data;
-  constructor(message: string, data?: string) {
-    super(message);
-    Error.captureStackTrace(this, AwsSigv4SignerError);
-    this.name = 'AwsSigv4SignerError';
-    this.message = message ?? 'AwsSigv4Signer Error';
-    this.data = data
+export class CatImpl {
+  constructor(protected transport: Transport) {
+    this.transport = transport;
   }
+
+  health() {}
 }
