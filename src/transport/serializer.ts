@@ -59,9 +59,9 @@ export class Serializer {
     let serialized: string;
     try {
       serialized = JSON.stringify(payload);
-    } catch (e) {
-      const error = e as Error;
-      throw new SerializationError(error.message, payload);
+    } catch (error) {
+      const err = error as Error;
+      throw new SerializationError(err.message, payload);
     }
     return serialized;
   }
@@ -72,9 +72,9 @@ export class Serializer {
     try {
       // @ts-expect-error
       output = sjson.parse(payload, this[kJsonOptions]);
-    } catch (e) {
-      const error = e as Error;
-      throw new DeserializationError(error.message, payload);
+    } catch (error) {
+      const err = error as Error;
+      throw new DeserializationError(err.message, payload);
     }
     return output;
   }

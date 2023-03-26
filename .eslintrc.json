@@ -3,6 +3,7 @@
   "extends": [
     "prettier",
     "standard",
+    "plugin:unicorn/recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:import/errors",
@@ -46,6 +47,8 @@
     "comma-style": 0,
 
     // Disable some unnecessary or conflicting rules
+    "unicorn/prefer-ternary": 0,
+    "unicorn/no-null": 0,
     "no-use-before-define": "off",
     "unicorn/prevent-abbreviations": 0,
     "unicorn/no-await-expression-member": 0,
