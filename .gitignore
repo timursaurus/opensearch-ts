@@ -69,3 +69,7 @@ test/bundlers/**/bundle.js
 test/bundlers/parcel-test/.parcel-cache
 
 dist
+.eslintcache
+coverage
+.profile
+.idea
