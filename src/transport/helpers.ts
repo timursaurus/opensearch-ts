@@ -32,7 +32,7 @@ import { promisify } from "node:util";
 
 import { NOOP } from "@/utils";
 
-const pImmediate = promisify(setImmediate);
+const immediate = promisify(setImmediate);
 const sleep = promisify(setTimeout);
 
 export class Helpers {}
