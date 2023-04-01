@@ -89,11 +89,11 @@ export class Serializer {
     }
     let output = "";
     for (let i = 0, len = payload.length; i < len; i++) {
-      if (typeof payload[i] === "string") {
+      const value = payload[i];
+      if (typeof value === "string") {
         output += payload[i] + "\n";
       } else {
-        // @ts-expect-error
-        output += this.serialize(payload[i]) + "\n";
+        output += this.serialize(value) + "\n";
       }
     }
     return output;
