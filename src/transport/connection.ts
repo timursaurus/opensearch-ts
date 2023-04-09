@@ -62,7 +62,6 @@ export class Connection {
   deadCount: number;
   resurrectTimeout: number;
   makeRequest: typeof http.request | typeof https.request;
-  // openRequests: number;
   agent?:
     | http.Agent
     | https.Agent
@@ -281,6 +280,10 @@ export class Connection {
     }
     this.roles[role] = enabled;
     return this;
+  }
+
+  get openRequests() {
+    return this._openRequests;
   }
 
   get status() {
