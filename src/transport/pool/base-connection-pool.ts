@@ -29,12 +29,49 @@
 
 import { URL } from "node:url";
 import type { SecureContextOptions } from "node:tls";
-
 import Debug from "debug";
-import { NOOP } from "@/utils";
+import { Connection } from "@/transport";
 
+import { NOOP } from "@/utils";
+import { ConfigurationError } from "@/errors";
 const debug = Debug("opensearch:pool:base-connection");
 
-export class BaseConnectionPool {}
+export class BaseConnectionPool {
+  connections: Connection[];
+  size: number;
+  emit: (event: string | symbol, ...args: any[]) => boolean;
+
+  constructor() {}
+
+  getConnection(options): Connection | null {
+    throw new ConfigurationError("getConnection must be implemented.");
+  }
+
+  markAlive(connection: Connection) {
+    connection.status = Connection.statuses.ALIVE;
+    return this;
+  }
+
+  markDead(connection: Connection): this {
+    connection.status = Connection.statuses.DEAD;
+    return this;
+  }
+
+  createConnection(options) {}
+
+  addConnection(options) {}
+
+  removeConnection(connection: Connection) {
+    debug("Removing connection");
+  }
+
+  empty(callback = NOOP) {
+    debug("Emptying the connection pool");
+  }
+
+  update(nodes: Connection[]) {}
+
+  nodesToHost(nodes: Connection[], protocol) {}
+}
 
 export default BaseConnectionPool;

@@ -1,1 +1,1 @@
-export * from "./aws-sigv4-signer";
+export * from "./sigv4-signer";

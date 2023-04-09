@@ -30,6 +30,7 @@
 export const kJsonOptions = Symbol("opensearch:secure-json-parse-options");
 export const kClient = Symbol("opensearch:client");
 export const kMetaHeader = Symbol("opensearch:meta-header");
+export const kMaxRetries = Symbol("opensearch:max-retries");
 export const kInitialOptions = Symbol("opensearch:initial-options");
 export const kChild = Symbol("opensearch:child");
 export const kExtensions = Symbol("opensearch:extensions");
