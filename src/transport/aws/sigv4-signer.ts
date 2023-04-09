@@ -28,10 +28,10 @@
  */
 
 import crypto from "node:crypto";
-import { OpenSearchClientError } from "@/errors";
-import type { AwsSigv4SignerOptions } from "@/types/aws";
 import { SignatureV4 } from '@aws-sdk/signature-v4'
 import { Sha256 } from '@aws-crypto/sha256-js'
+import { OpenSearchClientError } from "@/errors";
+import type { AwsSigv4SignerOptions } from "@/types/aws";
 import { Connection  } from '@/transport'
 
 // <
