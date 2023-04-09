@@ -41,7 +41,7 @@ export class BaseConnectionPool {
   size: number;
   emit: (event: string | symbol, ...args: any[]) => boolean;
 
-  constructor() {}
+  // constructor() {}
 
   getConnection(options): Connection | null {
     throw new ConfigurationError("getConnection must be implemented.");
