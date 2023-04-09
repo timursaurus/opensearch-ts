@@ -27,8 +27,8 @@
  * under the License.
  */
 
-// import { ApiResponse, Context } from '@/types/transport';
-// import { ErrorCause, ErrorResponseBase } from '@/types/internal';
+import type { ErrorCause, ErrorResponseBase } from "@/types/internal";
+import type { APIResponse, Context } from "@/types/transport";
 
 export class OpenSearchClientError extends Error {
   name: string;
@@ -38,56 +38,55 @@ export class OpenSearchClientError extends Error {
   }
 }
 
-// export class TimeoutError<
-//   TResponse = Record<string, unknown>,
-//   TContext = Context
-// > extends OpenSearchClientError {
-//   name: string;
-//   message: string;
-//   meta?: ApiResponse<TResponse, TContext>;
-//   constructor(message: string, meta?: ApiResponse<TResponse, TContext>) {
-//     super(message);
-//     Error.captureStackTrace(this, TimeoutError);
-//     this.name = 'TimeoutError';
-//     this.message = message ?? 'Timeout Error';
-//     this.meta = meta;
-//   }
-// }
+export class TimeoutError<
+  TResponse = Record<string, unknown>,
+  TContext = Context
+> extends OpenSearchClientError {
+  name: string;
+  message: string;
+  meta?: APIResponse<TResponse, TContext>;
+  constructor(message: string, meta?: APIResponse<TResponse, TContext>) {
+    super(message);
+    Error.captureStackTrace(this, TimeoutError);
+    this.name = "TimeoutError";
+    this.message = message ?? "Timeout Error";
+    this.meta = meta;
+  }
+}
 
-// export class ConnectionError<
-//   TResponse = Record<string, unknown>,
-//   TContext = Context
-// > extends OpenSearchClientError {
-//   name: string;
-//   message: string;
-//   meta?: ApiResponse<TResponse, TContext>;
-//   constructor(message: string, meta?: ApiResponse<TResponse, TContext>) {
-//     super(message);
-//     Error.captureStackTrace(this, ConnectionError);
-//     this.name = 'ConnectionError';
-//     this.message = message ?? 'Connection Error';
-//     this.meta = meta;
-//   }
-// }
+export class ConnectionError<
+  TResponse = Record<string, unknown>,
+  TContext = Context
+> extends OpenSearchClientError {
+  name: string;
+  message: string;
+  meta?: APIResponse<TResponse, TContext>;
+  constructor(message: string, meta?: APIResponse<TResponse, TContext>) {
+    super(message);
+    Error.captureStackTrace(this, ConnectionError);
+    this.name = "ConnectionError";
+    this.message = message ?? "Connection Error";
+    this.meta = meta;
+  }
+}
 
-// export class NoLivingConnectionsError<
-//   TResponse = Record<string, unknown>,
-//   TContext = Context
-// > extends OpenSearchClientError {
-//   name: string;
-//   message: string;
-//   meta: ApiResponse<TResponse, TContext>;
-
-//   constructor(message: string, meta: ApiResponse<TResponse, TContext>) {
-//     super(message);
-//     Error.captureStackTrace(this, NoLivingConnectionsError);
-//     this.name = 'NoLivingConnectionsError';
-//     this.message =
-//       message ??
-//       'Given the configuration, the ConnectionPool was not able to find a usable Connection for this request.';
-//     this.meta = meta;
-//   }
-// }
+export class NoLivingConnectionsError<
+  TResponse = Record<string, unknown>,
+  TContext = Context
+> extends OpenSearchClientError {
+  name: string;
+  message: string;
+  meta?: APIResponse<TResponse, TContext>;
+  constructor(message: string, meta?: APIResponse<TResponse, TContext>) {
+    super(message);
+    Error.captureStackTrace(this, NoLivingConnectionsError);
+    this.name = "NoLivingConnectionsError";
+    this.message =
+    message ??
+    "Given the configuration, the ConnectionPool was not able to find a usable Connection for this request.";
+    this.meta = meta;
+  }
+}
 
 export class SerializationError extends OpenSearchClientError {
   name: string;
@@ -115,88 +114,89 @@ export class DeserializationError extends OpenSearchClientError {
   }
 }
 
-// export class ConfigurationError extends OpenSearchClientError {
-//   constructor(message: string) {
-//     super(message);
-//     Error.captureStackTrace(this, ConfigurationError);
-//     this.name = 'ConfigurationError';
-//     this.message = message ?? 'Configuration Error';
-//   }
-// }
+export class ConfigurationError extends OpenSearchClientError {
+  constructor(message: string) {
+    super(message);
+    Error.captureStackTrace(this, ConfigurationError);
+    this.name = "ConfigurationError";
+    this.message = message ?? "Configuration Error";
+  }
+}
 
-// export class ResponseError<
-//   TResponse = Record<string, unknown>,
-//   TContext = Context
-// > extends OpenSearchClientError {
-//   name: string;
-//   message: string;
-//   meta: ApiResponse<TResponse, TContext>;
-//   constructor(meta: ApiResponse) {
-//     super('Response Error');
-//     Error.captureStackTrace(this, ResponseError);
-//     this.name = 'ResponseError';
-//     if (meta.body?.error?.type) {
-//       const error = meta.body.error as ErrorCause;
-//       if (Array.isArray(error.root_cause)) {
-//         this.message = `${error.type}: ${error.root_cause
-//           .map((entry) => `[${entry.type}] Reason: ${entry.reason}`)
-//           .join('; ')}`;
-//       } else {
-//         this.message = error.type;
-//       }
-//     } else {
-//       this.message = 'Response Error';
-//     }
-//     this.meta = meta as ApiResponse<TResponse, TContext>;
-//   }
+export class ResponseError<
+  TResponse = Record<string, unknown>,
+  TContext = Context
+> extends OpenSearchClientError {
+  name: string;
+  message: string;
+  meta: APIResponse<TResponse, TContext>;
+  constructor(meta: APIResponse) {
+    super("Response Error");
+    Error.captureStackTrace(this, ResponseError);
+    this.name = "ResponseError";
+    const error = meta.body.error as ErrorCause;
+    if (error?.type) {
+      if (Array.isArray(error.root_cause)) {
+        this.message = `${error.type}: ${error.root_cause
+          .map((entry) => `[${entry.type}] Reason: ${entry.reason}`)
+          .join("; ")}`;
+      } else {
+        this.message = error.type;
+      }
+    } else {
+      this.message = "Response Error";
+    }
+    this.meta = meta as APIResponse<TResponse, TContext>;
+  }
 
-//   get body() {
-//     return this.meta.body;
-//   }
+  get body() {
+    return this.meta?.body;
+  }
 
-//   get statusCode() {
-//     const body = this.meta.body as ErrorResponseBase;
-//     if (typeof body === 'object' && typeof body.status === 'number') {
-//       return body.status;
-//     }
-//     return this.meta.statusCode;
-//   }
+  get statusCode() {
+    const body = this.meta?.body as ErrorResponseBase;
+    if (typeof body === "object" && typeof body.status === "number") {
+      return body.status;
+    }
+    return this.meta?.statusCode;
+  }
 
-//   get headers() {
-//     return this.meta.headers;
-//   }
+  get headers() {
+    return this.meta?.headers;
+  }
 
-//   toString() {
-//     return JSON.stringify(this.meta.body);
-//   }
-// }
+  toString() {
+    return JSON.stringify(this.meta?.body);
+  }
+}
 
-// export class RequestAbortedError<
-//   TResponse = Record<string, unknown>,
-//   TContext = Context
-// > extends OpenSearchClientError {
-//   name: string;
-//   message: string;
-//   meta?: ApiResponse<TResponse, TContext>;
-//   constructor(message: string, meta?: ApiResponse<TResponse, TContext>) {
-//     super(message);
-//     Error.captureStackTrace(this, RequestAbortedError);
-//     this.name = 'RequestAbortedError';
-//     this.message = message || 'Request aborted';
-//     this.meta = meta;
-//   }
-// }
+export class RequestAbortedError<
+  TResponse = Record<string, unknown>,
+  TContext = Context
+> extends OpenSearchClientError {
+  name: string;
+  message: string;
+  meta?: APIResponse<TResponse, TContext>;
+  constructor(message: string, meta?: APIResponse<TResponse, TContext>) {
+    super(message);
+    Error.captureStackTrace(this, RequestAbortedError);
+    this.name = "RequestAbortedError";
+    this.message = message ?? "Request aborted";
+    this.meta = meta;
+  }
+}
 
-// export class NotCompatibleError<
-//   TResponse = Record<string, unknown>,
-//   TContext = Context
-// > extends OpenSearchClientError {
-//   meta: ApiResponse<TResponse, TContext>;
-//   constructor(meta: ApiResponse<TResponse, TContext>) {
-//     super('Not Compatible Error');
-//     Error.captureStackTrace(this, NotCompatibleError);
-//     this.name = 'NotCompatibleError';
-//     this.message = 'The client noticed that the server is not a supported distribution';
-//     this.meta = meta;
-//   }
-// }
+export class NotCompatibleError<
+  TResponse = Record<string, unknown>,
+  TContext = Context
+> extends OpenSearchClientError {
+  meta?: APIResponse<TResponse, TContext>;
+  constructor(meta?: APIResponse<TResponse, TContext>) {
+    super("Not Compatible Error");
+    Error.captureStackTrace(this, NotCompatibleError);
+    this.name = "NotCompatibleError";
+    this.message =
+      "The client noticed that the server is not a supported distribution";
+    this.meta = meta;
+  }
+}
