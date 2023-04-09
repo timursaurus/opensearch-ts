@@ -31,8 +31,29 @@ import { Readable } from "node:stream";
 import { promisify } from "node:util";
 
 import { NOOP } from "@/utils";
+import type { BulkHelper, HelpersOptions, BulkStats } from "@/types/helpers";
+import { kClient, kMaxRetries, kMetaHeader } from "@/symbols";
+import { Client } from "@/client";
 
-const pImmediate = promisify(setImmediate);
+const immediate = promisify(setImmediate);
 const sleep = promisify(setTimeout);
 
-export class Helpers {}
+export class Helpers {
+  [kMetaHeader]: string | null;
+  [kClient]: Client;
+  [kMaxRetries]: number;
+  constructor(options: HelpersOptions) {
+    this[kMetaHeader] = options.metaHeader;
+    this[kClient] = options.client;
+    this[kMaxRetries] = options.maxRetries;
+  }
+
+  search(params, options) {}
+
+  scrollSearch(params, options) {}
+
+  msearch() {}
+
+  bulk<TDocument = unknown>(options, requestOptions): BulkHelper<BulkStats> {}
+}
+export default Helpers;
