@@ -28,8 +28,11 @@
  */
 
 import crypto from "node:crypto";
-import aws4 from "aws4";
-import { OpenSearchClientError } from "../../errors";
+import { OpenSearchClientError } from "@/errors";
+import type { AwsSigv4SignerOptions } from "@/types/aws";
+import { SignatureV4 } from '@aws-sdk/signature-v4'
+import { Sha256 } from '@aws-crypto/sha256-js'
+import { Connection  } from '@/transport'
 
 // <
 //   TResponse = Record<string, unknown>,
@@ -46,3 +49,20 @@ export class AwsSigv4SignerError extends OpenSearchClientError {
     this.data = data;
   }
 }
+
+export function AwsSigv4Signer(options: AwsSigv4SignerOptions) {
+  if (!options.region) {
+    throw new AwsSigv4SignerError("Region cannot be empty");
+  }
+}
+
+// function buildSignedRequestObject(request) {
+//   const sigv4 = new SignatureV4({
+//     region: 'us-east-1'
+//     service: 'es',
+//     sha256: Sha256,
+//     credentials: {
+
+//     }
+//   })
+// }
