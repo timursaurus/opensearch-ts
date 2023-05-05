@@ -26,7 +26,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { RequestBase } from "./types/internal";
+
+import { Readable as ReadableStream } from "node:stream";
+import ms from "ms";
+import { RequestBase } from "@/types/internal";
 
 export function NOOP() {}
 
@@ -41,4 +44,53 @@ export function normalizeArguments(params: RequestBase, options, callback) {
     options = {};
   }
   return [params, options, callback];
+}
+
+export function isStream(obj: any): obj is ReadableStream;
+export function isStream(obj: ReadableStream): obj is ReadableStream {
+  return obj != null && typeof obj.pipe === "function";
+}
+
+export function toMS(time: number | string) {
+  if (typeof time === "string") {
+    return ms(time);
+  }
+  return time;
+}
+
+export function generateRequestId() {
+  const maxInt = 2_147_483_647;
+  let nextReqId = 0;
+  return () => (nextReqId = (nextReqId + 1) & maxInt);
+}
+
+export function lowerCaseHeaders(oldHeaders: Record<string, unknown>) {
+  if (oldHeaders == null) {
+    return oldHeaders;
+  }
+  const newHeaders: Record<string, unknown> = {};
+  for (const header in oldHeaders) {
+    newHeaders[header.toLowerCase()] = oldHeaders[header];
+  }
+  return newHeaders;
+}
+
+export function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function shouldSerialize(obj: RequestBase): boolean {
+  return (
+    typeof obj !== "string" && typeof obj.pipe !== "function" && Buffer.isBuffer(obj) === false
+  );
+}
+
+export function roundRobinSelector() {
+  let current = -1;
+  return function _roundRobinSelector(connections) {
+    if (++current >= connections.length) {
+      current = 0;
+    }
+    return connections[current];
+  };
 }
