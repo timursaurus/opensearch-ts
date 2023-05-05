@@ -49,8 +49,7 @@ export class Serializer {
     const disable = options?.disablePrototypePoisoningProtection ?? false;
     this[kJsonOptions] = {
       protoAction: disable === true || disable === "proto" ? "ignore" : "error",
-      constructorAction:
-        disable === true || disable === "constructor" ? "ignore" : "error",
+      constructorAction: disable === true || disable === "constructor" ? "ignore" : "error",
     };
   }
 
@@ -82,10 +81,7 @@ export class Serializer {
   ndserialize(payload: (string | Record<string, unknown>)[]): string {
     debug("NDSerializing ", payload);
     if (!Array.isArray(payload)) {
-      throw new SerializationError(
-        "The argument provided is not an array",
-        payload
-      );
+      throw new SerializationError("The argument provided is not an array", payload);
     }
     let output = "";
     for (let i = 0, len = payload.length; i < len; i++) {
