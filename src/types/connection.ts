@@ -1,4 +1,4 @@
-import type { ConnectionOptions as TlsConnectionOptions } from "node:tls";
+import type { ConnectionOptions as TLSConnectionOptions } from "node:tls";
 import type { IncomingHttpHeaders, ClientRequestArgs } from "node:http";
 import type { BasicAuth } from "@/types/pool";
 
@@ -19,14 +19,14 @@ export interface AgentOptions {
   maxFreeSockets?: number;
 }
 
-type AgentFn = (options: ConnectionOptions) => any;
+export type AgentFn = (options: ConnectionOptions) => any;
 
 export interface ConnectionOptions {
   url: URL;
-  ssl?: TlsConnectionOptions;
+  ssl?: TLSConnectionOptions;
   id?: string;
   headers?: IncomingHttpHeaders;
-  agent?: AgentOptions | AgentFn | boolean
+  agent?: AgentOptions | AgentFn | boolean;
   status?: string;
   roles?: ConnectionRoles;
   auth?: BasicAuth;
