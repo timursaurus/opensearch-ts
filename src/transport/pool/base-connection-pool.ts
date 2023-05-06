@@ -28,22 +28,61 @@
  */
 
 import { URL } from "node:url";
-import type { SecureContextOptions } from "node:tls";
+import type { SecureContextOptions, ConnectionOptions as TLSConnectionOptions } from "node:tls";
 import Debug from "debug";
 import { Connection } from "@/transport";
 
 import { NOOP } from "@/utils";
 import { ConfigurationError } from "@/errors";
+import { AgentOptions, ConnectionOptions, ConnectionRoles } from "@/types/connection";
+import { BasicAuth } from "@/types/pool";
+
 const debug = Debug("opensearch:pool:base-connection");
+
+export interface BaseConnectionPoolOptions {
+  ssl?: SecureContextOptions;
+  agent?: AgentOptions;
+  proxy?: string | URL;
+  auth?: BasicAuth;
+  emit: (event: string | symbol, ...args: any[]) => boolean;
+  Connection: typeof Connection;
+}
+
+export interface NodeSelectorFn {
+  (connections: Connection[]): Connection;
+}
+
+export interface NodeFilterFn {
+  (connection: Connection): boolean;
+}
+
+export interface GetConnectionOptions {
+  filter?: NodeFilterFn;
+  selector?: NodeSelectorFn;
+  requestId: string | number;
+  name: string;
+  now: number;
+}
 
 export class BaseConnectionPool {
   connections: Connection[];
   size: number;
   emit: (event: string | symbol, ...args: any[]) => boolean;
+  private _ssl?: SecureContextOptions;
+  private _agent?: AgentOptions;
+  private _proxy?: string | URL;
 
-  // constructor() {}
+  constructor(options: BaseConnectionPoolOptions) {
+    this.connections = [];
+    this.size = this.connections.length;
+    this.emit = options.emit ?? NOOP;
 
-  getConnection(options): Connection | null {
+    this._ssl = options.ssl;
+    this._agent = options.agent;
+    this._proxy = options.proxy;
+  }
+
+  getConnection(options: GetConnectionOptions): Connection | null {
     throw new ConfigurationError("getConnection must be implemented.");
   }
 
@@ -59,7 +98,7 @@ export class BaseConnectionPool {
 
   createConnection(options) {}
 
-  addConnection(options) {}
+  addConnection(options: ConnectionOptions) {}
 
   removeConnection(connection: Connection) {
     debug("Removing connection");
@@ -72,6 +111,12 @@ export class BaseConnectionPool {
   update(nodes: Connection[]) {}
 
   nodesToHost(nodes: Connection[], protocol) {}
+
+  urlToHost(url: string) {
+    return {
+      url: new URL(url),
+    };
+  }
 }
 
 export default BaseConnectionPool;
