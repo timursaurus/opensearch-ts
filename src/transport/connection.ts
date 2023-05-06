@@ -32,7 +32,7 @@ import http from "node:http";
 import https from "node:https";
 import { inspect } from "node:util";
 import { pipeline } from "node:stream";
-import type { ConnectionOptions as TlsConnectionOptions } from "node:tls";
+import type { ConnectionOptions as TLSConnectionOptions } from "node:tls";
 
 import Debug from "debug";
 import hpagent from "hpagent";
@@ -50,7 +50,7 @@ const debug = Debug("opensearch:transport:connection");
 const INVALID_PATH_REGEX = /[^\u0021-\u00FF]/;
 export class Connection {
   url: URL;
-  ssl: TlsConnectionOptions | null;
+  ssl: TLSConnectionOptions | null;
   id: string;
   headers: http.IncomingHttpHeaders;
   roles: ConnectionRoles;
