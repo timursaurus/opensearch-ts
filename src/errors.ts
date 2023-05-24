@@ -45,11 +45,11 @@ export class TimeoutError<
   name: string;
   message: string;
   meta?: APIResponse<TResponse, TContext>;
-  constructor(message: string, meta?: APIResponse<TResponse, TContext>) {
+  constructor(message = "Timeout Error", meta?: APIResponse<TResponse, TContext>) {
     super(message);
     Error.captureStackTrace(this, TimeoutError);
     this.name = "TimeoutError";
-    this.message = message ?? "Timeout Error";
+    this.message = message;
     this.meta = meta;
   }
 }
@@ -61,11 +61,11 @@ export class ConnectionError<
   name: string;
   message: string;
   meta?: APIResponse<TResponse, TContext>;
-  constructor(message: string, meta?: APIResponse<TResponse, TContext>) {
+  constructor(message = "Connection Error", meta?: APIResponse<TResponse, TContext>) {
     super(message);
     Error.captureStackTrace(this, ConnectionError);
     this.name = "ConnectionError";
-    this.message = message ?? "Connection Error";
+    this.message = message;
     this.meta = meta;
   }
 }
@@ -77,13 +77,14 @@ export class NoLivingConnectionsError<
   name: string;
   message: string;
   meta?: APIResponse<TResponse, TContext>;
-  constructor(message: string, meta?: APIResponse<TResponse, TContext>) {
+  constructor(
+    message = "Given the configuration, the ConnectionPool was not able to find a usable Connection for this request.",
+    meta?: APIResponse<TResponse, TContext>
+  ) {
     super(message);
     Error.captureStackTrace(this, NoLivingConnectionsError);
     this.name = "NoLivingConnectionsError";
-    this.message =
-    message ??
-    "Given the configuration, the ConnectionPool was not able to find a usable Connection for this request.";
+    this.message = message;
     this.meta = meta;
   }
 }
@@ -92,11 +93,11 @@ export class SerializationError extends OpenSearchClientError {
   name: string;
   message: string;
   data: Record<string, unknown>;
-  constructor(message: string, data: Record<string, unknown>) {
+  constructor(message = "Serialization Error", data: Record<string, unknown>) {
     super(message);
     Error.captureStackTrace(this, SerializationError);
     this.name = "SerializationError";
-    this.message = message ?? "Serialization Error";
+    this.message = message;
     this.data = data;
   }
 }
@@ -105,21 +106,21 @@ export class DeserializationError extends OpenSearchClientError {
   name: string;
   message: string;
   data: string;
-  constructor(message: string, data: string) {
+  constructor(message = "Deserialization Error", data: string) {
     super(message);
     Error.captureStackTrace(this, DeserializationError);
     this.name = "DeserializationError";
-    this.message = message ?? "Deserialization Error";
+    this.message = message;
     this.data = data;
   }
 }
 
 export class ConfigurationError extends OpenSearchClientError {
-  constructor(message: string) {
+  constructor(message = "Configuration Error") {
     super(message);
     Error.captureStackTrace(this, ConfigurationError);
     this.name = "ConfigurationError";
-    this.message = message ?? "Configuration Error";
+    this.message = message;
   }
 }
 
@@ -177,11 +178,11 @@ export class RequestAbortedError<
   name: string;
   message: string;
   meta?: APIResponse<TResponse, TContext>;
-  constructor(message: string, meta?: APIResponse<TResponse, TContext>) {
+  constructor(message = "Request aborted", meta?: APIResponse<TResponse, TContext>) {
     super(message);
     Error.captureStackTrace(this, RequestAbortedError);
     this.name = "RequestAbortedError";
-    this.message = message ?? "Request aborted";
+    this.message = message;
     this.meta = meta;
   }
 }
@@ -195,8 +196,7 @@ export class NotCompatibleError<
     super("Not Compatible Error");
     Error.captureStackTrace(this, NotCompatibleError);
     this.name = "NotCompatibleError";
-    this.message =
-      "The client noticed that the server is not a supported distribution";
+    this.message = "The client noticed that the server is not a supported distribution";
     this.meta = meta;
   }
 }
