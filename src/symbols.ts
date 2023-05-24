@@ -47,3 +47,6 @@ export const kShutdown = Symbol("opensearch:shutdown");
 export const kSnapshot = Symbol("opensearch:snapshot");
 export const kTasks = Symbol("opensearch:tasks");
 export const kConfigurationError = Symbol("opensearch:configuration-error");
+
+export const kCompatibleCheck = Symbol("opensearch:compatible-check");
+export const kApiVersioning = Symbol("opensearch:api-versioning");
