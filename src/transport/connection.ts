@@ -37,14 +37,14 @@ import type { ConnectionOptions as TLSConnectionOptions } from "node:tls";
 import Debug from "debug";
 import hpagent from "hpagent";
 
-import { isStream, NOOP } from "@/utils";
 import type {
   ConnectionOptions,
   ConnectionRequestParams,
   ConnectionRoles,
 } from "@/types/connection";
-import type { BasicAuth } from "@/types/pool";
+
 import { ConfigurationError, ConnectionError, RequestAbortedError, TimeoutError } from "@/errors";
+import { isStream, NOOP, prepareHeaders, resolvePathname, stripAuth } from "@/utils";
 
 const debug = Debug("opensearch:transport:connection");
 const INVALID_PATH_REGEX = /[^\u0021-\u00FF]/;
@@ -158,7 +158,7 @@ export class Connection {
       const key = paramsKeys[i];
       if (key === "path") {
         const _path = params[key] as string;
-        request.pathname = resolve(request.pathname, _path);
+        request.pathname = resolvePathname(request.pathname, _path);
       } else if (key === "querystring" && !!params[key]) {
         if (request.search === "") {
           request.search = `?${params[key]}`;
@@ -204,7 +204,9 @@ export class Connection {
       this._openRequests--;
       _request.once("error", NOOP);
       _request.abort();
-      callback(new TimeoutError("Request timed out", params), null);
+      // TODO: This should be a TimeoutError
+      // callback(new TimeoutError("Request timed out", params), null);
+      callback(new TimeoutError("Request timed out"), null);
     };
 
     const onError = (error: Error) => {
@@ -279,11 +281,11 @@ export class Connection {
 
   toJSON() {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { authorization, ..._headers } = this.headers;
+    const { authorization, ...headers } = this.headers;
     return {
       url: stripAuth(this.url.toString()),
       id: this.id,
-      headers: _headers,
+      headers,
       deadCount: this.deadCount,
       resurrectTimeout: this.resurrectTimeout,
       openRequests: this._openRequests,
@@ -295,43 +297,6 @@ export class Connection {
   [inspect.custom]() {
     return this.toJSON();
   }
-}
-
-export function stripAuth(href: string) {
-  if (!href.includes("@")) {
-    return href;
-  }
-  return href.slice(0, href.indexOf("//") + 2) + href.slice(href.indexOf("@") + 1);
-}
-
-function resolve(host: string, path: string) {
-  const hostEndWithSlash = host[host.length - 1] === "/";
-  const pathStartsWithSlash = path[0] === "/";
-
-  if (hostEndWithSlash === true && pathStartsWithSlash === true) {
-    return host + path.slice(1);
-  } else if (hostEndWithSlash === pathStartsWithSlash) {
-    return `${host}/${path}`;
-  } else {
-    return host + path;
-  }
-}
-
-function prepareHeaders(
-  headers: http.IncomingHttpHeaders,
-  auth?: BasicAuth
-): http.IncomingHttpHeaders {
-  if (
-    auth != null &&
-    headers.authorization == null &&
-    auth.username != null &&
-    auth.password != null
-  ) {
-    const _auth = `${auth.username}:${auth.password}`;
-    const authBuffer = Buffer.from(_auth, "utf8");
-    headers.authorization = `Basic ${authBuffer.toString("base64")}`;
-  }
-  return headers;
 }
 
 const validStatuses = Object.keys(Connection.statuses).map((k) => Connection.statuses[k]);
