@@ -28,11 +28,7 @@
  */
 
 import { Serializer } from "@/transport";
-import {
-  APIError,
-  APIResponse,
-  MemoryCircuitBreakerOptions,
-} from "@/types/transport";
+import { APIError, APIResponse, MemoryCircuitBreakerOptions } from "@/types/transport";
 
 export type CallbackFn<TResponse, TContext> = (
   error: APIError,
@@ -55,7 +51,7 @@ export interface ClientOptions {
   resurrectStrategy?: "ping" | "optimistic" | "none";
   suggestCompression?: boolean;
   compression?: "gzip";
-  ssl?: TlsConnectionOptions;
+  ssl?: TLSConnectionOptions;
   agent?: AgentOptions | agentFn | false;
   nodeFilter?: nodeFilterFn;
   nodeSelector?: nodeSelectorFn | string;

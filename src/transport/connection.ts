@@ -31,42 +31,33 @@ import assert from "node:assert";
 import http from "node:http";
 import https from "node:https";
 import { inspect } from "node:util";
-import { pipeline, Readable as ReadableStream } from "node:stream";
-import type { ConnectionOptions as TlsConnectionOptions } from "node:tls";
+import { pipeline } from "node:stream";
+import type { ConnectionOptions as TLSConnectionOptions } from "node:tls";
 
 import Debug from "debug";
 import hpagent from "hpagent";
 
-import { NOOP } from "@/utils";
 import type {
   ConnectionOptions,
   ConnectionRequestParams,
   ConnectionRoles,
 } from "@/types/connection";
-import type { BasicAuth } from "@/types/pool";
-import {
-  ConfigurationError,
-  ConnectionError,
-  RequestAbortedError,
-  TimeoutError,
-} from "@/errors";
+
+import { ConfigurationError, ConnectionError, RequestAbortedError, TimeoutError } from "@/errors";
+import { isStream, NOOP, prepareHeaders, resolvePathname, stripAuth } from "@/utils";
 
 const debug = Debug("opensearch:transport:connection");
 const INVALID_PATH_REGEX = /[^\u0021-\u00FF]/;
 export class Connection {
   url: URL;
-  ssl: TlsConnectionOptions | null;
+  ssl: TLSConnectionOptions | null;
   id: string;
   headers: http.IncomingHttpHeaders;
   roles: ConnectionRoles;
   deadCount: number;
   resurrectTimeout: number;
   makeRequest: typeof http.request | typeof https.request;
-  agent?:
-    | http.Agent
-    | https.Agent
-    | hpagent.HttpProxyAgent
-    | hpagent.HttpsProxyAgent;
+  agent?: http.Agent | https.Agent | hpagent.HttpProxyAgent | hpagent.HttpsProxyAgent;
 
   static statuses: Record<string, string> = {
     ALIVE: "alive",
@@ -96,8 +87,7 @@ export class Connection {
     this._openRequests = 0;
     this._status = options.status ?? Connection.statuses.ALIVE;
     this.roles = Object.assign({}, defaultRoles, options.roles);
-    this.makeRequest =
-      this.url.protocol === "http:" ? http.request : https.request;
+    this.makeRequest = this.url.protocol === "http:" ? http.request : https.request;
 
     if (!["http:", "https:"].includes(this.url.protocol)) {
       throw new ConfigurationError(`Invalid protocol: '${this.url.protocol}'`);
@@ -125,9 +115,7 @@ export class Connection {
         this.agent =
           this.url.protocol === "http:"
             ? new hpagent.HttpProxyAgent(_agentOptions)
-            : new hpagent.HttpsProxyAgent(
-                Object.assign({}, _agentOptions, this.ssl)
-              );
+            : new hpagent.HttpsProxyAgent(Object.assign({}, _agentOptions, this.ssl));
       } else {
         this.agent =
           this.url.protocol === "http:"
@@ -153,8 +141,7 @@ export class Connection {
     const url = this.url;
     const request = {
       protocol: url.protocol,
-      hostname:
-        url.hostname[0] === "[" ? url.hostname.slice(1, -1) : url.hostname,
+      hostname: url.hostname[0] === "[" ? url.hostname.slice(1, -1) : url.hostname,
       hash: url.hash,
       search: url.search,
       pathname: url.pathname,
@@ -171,7 +158,7 @@ export class Connection {
       const key = paramsKeys[i];
       if (key === "path") {
         const _path = params[key] as string;
-        request.pathname = resolve(request.pathname, _path);
+        request.pathname = resolvePathname(request.pathname, _path);
       } else if (key === "querystring" && !!params[key]) {
         if (request.search === "") {
           request.search = `?${params[key]}`;
@@ -199,10 +186,7 @@ export class Connection {
     let cleanedListeners = false;
     const _requestParams = this.buildRequestObject(params);
     if (INVALID_PATH_REGEX.test(_requestParams.path as string)) {
-      callback(
-        new TypeError(`ERR_UNESCAPED_CHARACTERS: ${_requestParams.path}`),
-        null
-      );
+      callback(new TypeError(`ERR_UNESCAPED_CHARACTERS: ${_requestParams.path}`), null);
       return { abort: NOOP };
     }
     debug("Starting a new request", params);
@@ -220,7 +204,9 @@ export class Connection {
       this._openRequests--;
       _request.once("error", NOOP);
       _request.abort();
-      callback(new TimeoutError(`Request timed out`, params), null);
+      // TODO: This should be a TimeoutError
+      // callback(new TimeoutError("Request timed out", params), null);
+      callback(new TimeoutError("Request timed out"), null);
     };
 
     const onError = (error: Error) => {
@@ -274,9 +260,7 @@ export class Connection {
       throw new ConfigurationError(`Unsupported role: '${role}'`);
     }
     if (typeof enabled !== "boolean") {
-      throw new ConfigurationError(
-        `enabled must be a boolean, got '${typeof enabled}'`
-      );
+      throw new ConfigurationError(`enabled must be a boolean, got '${typeof enabled}'`);
     }
     this.roles[role] = enabled;
     return this;
@@ -297,11 +281,11 @@ export class Connection {
 
   toJSON() {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { authorization, ..._headers } = this.headers;
+    const { authorization, ...headers } = this.headers;
     return {
       url: stripAuth(this.url.toString()),
       id: this.id,
-      _headers,
+      headers,
       deadCount: this.deadCount,
       resurrectTimeout: this.resurrectTimeout,
       openRequests: this._openRequests,
@@ -315,56 +299,8 @@ export class Connection {
   }
 }
 
-export function stripAuth(href: string) {
-  if (!href.includes("@")) {
-    return href;
-  }
-  return (
-    href.slice(0, href.indexOf("//") + 2) + href.slice(href.indexOf("@") + 1)
-  );
-}
-
-function resolve(host: string, path: string) {
-  const hostEndWithSlash = host[host.length - 1] === "/";
-  const pathStartsWithSlash = path[0] === "/";
-
-  if (hostEndWithSlash === true && pathStartsWithSlash === true) {
-    return host + path.slice(1);
-  } else if (hostEndWithSlash === pathStartsWithSlash) {
-    return `${host}/${path}`;
-  } else {
-    return host + path;
-  }
-}
-
-function isStream(obj: any): obj is ReadableStream;
-function isStream(obj: ReadableStream): obj is ReadableStream {
-  return obj != null && typeof obj.pipe === "function";
-}
-
-export function prepareHeaders(
-  headers: http.IncomingHttpHeaders,
-  auth?: BasicAuth
-): http.IncomingHttpHeaders {
-  if (
-    auth != null &&
-    headers.authorization == null &&
-    auth.username != null &&
-    auth.password != null
-  ) {
-    const _auth = `${auth.username}:${auth.password}`;
-    const authBuffer = Buffer.from(_auth, "utf8");
-    headers.authorization = `Basic ${authBuffer.toString("base64")}`;
-  }
-  return headers;
-}
-
-const validStatuses = Object.keys(Connection.statuses).map(
-  (k) => Connection.statuses[k]
-);
-const validRoles = new Set(
-  Object.keys(Connection.roles).map((k) => Connection.roles[k])
-);
+const validStatuses = Object.keys(Connection.statuses).map((k) => Connection.statuses[k]);
+const validRoles = new Set(Object.keys(Connection.roles).map((k) => Connection.roles[k]));
 const defaultRoles = {
   [Connection.roles.DATA]: true,
   [Connection.roles.INGEST]: true,
