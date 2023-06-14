@@ -28,7 +28,7 @@
  */
 
 import { stringify } from "node:querystring";
-import createDebug from "debug"
+import createDebug from "debug";
 import sjson from "secure-json-parse";
 import { kJsonOptions } from "@/symbols";
 import { DeserializationError, SerializationError } from "@/errors";
@@ -36,6 +36,10 @@ import { DeserializationError, SerializationError } from "@/errors";
 const debug = createDebug("opensearch:transport:serializer");
 
 export interface SerializerOptions {
+  /**
+   * Disable prototype poisoning protection
+   * @default false
+   */
   disablePrototypePoisoningProtection?: boolean | "proto" | "constructor";
 }
 
@@ -53,7 +57,12 @@ export class Serializer {
     };
   }
 
-  serialize(payload: Record<string, unknown>): string {
+  /**
+   * JSON serialization
+   * @param payload Object to serialize
+   * @returns string representation of the payload
+   */
+  serialize(payload: Record<string, any>): string {
     debug("Serializing ", payload);
     let serialized: string;
     try {
@@ -65,7 +74,12 @@ export class Serializer {
     return serialized;
   }
 
-  deserialize<T = unknown>(payload: string): T {
+  /**
+   * Safe JSON deserialization
+   * @param payload
+   * @returns
+   */
+  deserialize<T = any>(payload: string): T {
     debug("Deserializing ", payload);
     let output;
     try {
@@ -78,7 +92,12 @@ export class Serializer {
     return output;
   }
 
-  ndserialize(payload: (string | Record<string, unknown>)[]): string {
+  /**
+   * Newline-delimited serialization
+   * @param payload Array of strings or objects to serialize
+   * @returns newline-delimited string representation of the payload
+   */
+  ndserialize(payload: (string | Record<string, any>)[]): string {
     debug("NDSerializing ", payload);
     if (!Array.isArray(payload)) {
       throw new SerializationError("The argument provided is not an array", payload);
@@ -95,7 +114,12 @@ export class Serializer {
     return output;
   }
 
-  qserialize(object?: Record<string, unknown> | string): string {
+  /**
+   * Querystring serialization
+   * @param object Object to serialize
+   * @returns querystring representation of the object
+   */
+  qserialize(object: Record<string, unknown> | string): string {
     debug("QSerializing ", object);
     if (object == null) {
       return "";
