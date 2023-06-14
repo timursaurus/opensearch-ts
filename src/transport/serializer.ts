@@ -28,12 +28,12 @@
  */
 
 import { stringify } from "node:querystring";
-import Debug from "debug";
+import createDebug from "debug"
 import sjson from "secure-json-parse";
 import { kJsonOptions } from "@/symbols";
 import { DeserializationError, SerializationError } from "@/errors";
 
-const debug = Debug("opensearch:transport:serializer");
+const debug = createDebug("opensearch:transport:serializer");
 
 export interface SerializerOptions {
   disablePrototypePoisoningProtection?: boolean | "proto" | "constructor";
