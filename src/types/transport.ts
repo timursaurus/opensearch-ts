@@ -30,6 +30,9 @@
 import { Readable as ReadableStream } from "node:stream";
 import * as errors from "@/errors";
 import { Serializer } from "@/transport";
+import { ConnectionPool } from "@/transport/pool/connection-pool";
+import { CloudConnectionPool } from "@/transport/pool/cloud-connection-pool";
+import { NodeFilterFn, NodeSelectorFn } from "@/transport/pool";
 
 export type APIError =
   | errors.ConfigurationError
@@ -42,10 +45,8 @@ export type APIError =
   | errors.RequestAbortedError
   | errors.NotCompatibleError;
 
-export interface APIResponse<
-  TResponse = Record<string, unknown>,
-  TContext = Context
-> extends RequestEvent<TResponse, TContext> {}
+export interface APIResponse<TResponse = Record<string, unknown>, TContext = Context>
+  extends RequestEvent<TResponse, TContext> {}
 
 export type Context = unknown;
 
@@ -54,10 +55,7 @@ export interface MemoryCircuitBreakerOptions {
   maxPercentage: number;
 }
 
-export interface RequestEvent<
-  TResponse = Record<string, any>,
-  TContext = Context
-> {
+export interface RequestEvent<TResponse = Record<string, any>, TContext = Context> {
   body: TResponse;
   statusCode: number | null;
   headers: Record<string, any> | null;
@@ -78,6 +76,28 @@ export interface RequestEvent<
       reason: string;
     };
   };
+}
+
+export interface TransportOptions {
+  emit: (event: string | symbol, ...args: any[]) => boolean;
+  connectionPool: ConnectionPool | CloudConnectionPool;
+  serializer: Serializer;
+  maxRetries: number;
+  requestTimeout: number | string;
+  suggestCompression?: boolean;
+  compression?: "gzip";
+  sniffInterval?: number;
+  sniffOnConnectionFault?: boolean;
+  sniffEndpoint: string;
+  sniffOnStart?: boolean;
+  nodeFilter?: NodeFilterFn;
+  nodeSelector?: string | NodeSelectorFn;
+  headers?: Record<string, unknown>;
+  generateRequestId?: () => number;
+  name?: string;
+  opaqueIdPrefix?: string;
+  memoryCircuitBreaker?: MemoryCircuitBreakerOptions;
+  context?: Context;
 }
 
 export interface TransportGetConnectionOptions {

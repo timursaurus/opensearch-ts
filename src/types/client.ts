@@ -27,8 +27,18 @@
  * under the License.
  */
 
-import { Serializer } from "@/transport";
-import { APIError, APIResponse, MemoryCircuitBreakerOptions } from "@/types/transport";
+import type { ConnectionOptions as TLSConnectionOptions } from "node:tls";
+import type { AgentFn, AgentOptions } from "@/types/connection";
+import type { BasicAuth } from "@/types/pool";
+import { ConnectionPool } from "@/transport/pool/connection-pool";
+import { Connection, Serializer, Transport } from "@/transport";
+import type {
+  APIError,
+  APIResponse,
+  Context,
+  MemoryCircuitBreakerOptions,
+} from "@/types/transport";
+import type { NodeFilterFn, NodeSelectorFn } from "@/transport/pool";
 
 export type CallbackFn<TResponse, TContext> = (
   error: APIError,
@@ -52,12 +62,12 @@ export interface ClientOptions {
   suggestCompression?: boolean;
   compression?: "gzip";
   ssl?: TLSConnectionOptions;
-  agent?: AgentOptions | agentFn | false;
-  nodeFilter?: nodeFilterFn;
-  nodeSelector?: nodeSelectorFn | string;
+  agent?: AgentOptions | AgentFn | false;
+  nodeFilter?: NodeFilterFn;
+  nodeSelector?: NodeSelectorFn | string;
   headers?: Record<string, any>;
   opaqueIdPrefix?: string;
-  generateRequestId?: generateRequestIdFn;
+  generateRequestId?: () => number;
   name?: string | symbol;
   auth?: BasicAuth;
   context?: Context;
