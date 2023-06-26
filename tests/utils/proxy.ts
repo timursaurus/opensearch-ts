@@ -31,7 +31,7 @@
 import path from "node:path";
 import https from "node:https";
 import http from "node:http";
-import { readFileSync } from "node:fs";
+import { readFileSync,  } from "node:fs";
 import { createProxy as proxy } from "proxy";
 
 const ssl = {
@@ -42,35 +42,27 @@ const ssl = {
 export function createProxy() {
   return new Promise((resolve) => {
     const server = proxy(http.createServer());
-    server.listen(0, "127.0.0.1", () => {
-      resolve(server);
-    });
+    server.listen(0, "127.0.0.1", () => resolve(server));
   });
 }
 
 export function createSecureProxy() {
   return new Promise((resolve) => {
     const server = proxy(https.createServer(ssl));
-    server.listen(0, "127.0.0.1", () => {
-      resolve(server);
-    });
+    server.listen(0, "127.0.0.1", () => resolve(server));
   });
 }
 
 export function createServer() {
   return new Promise((resolve) => {
     const server = http.createServer();
-    server.listen(0, "127.0.0.1", () => {
-      resolve(server);
-    });
+    server.listen(0, "127.0.0.1", () => resolve(server));
   });
 }
 
 export function createSecureServer() {
   return new Promise((resolve) => {
     const server = https.createServer(ssl);
-    server.listen(0, "127.0.0.1", () => {
-      resolve(server);
-    });
+    server.listen(0, "127.0.0.1", () => resolve(server));
   });
 }

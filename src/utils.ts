@@ -28,6 +28,7 @@
  */
 
 import { Readable as ReadableStream } from "node:stream";
+import type { IncomingHttpHeaders } from "node:http";
 import ms from "ms";
 import type { NodeSelectorFn } from "./transport/pool";
 import { Connection } from "./transport";
@@ -171,10 +172,26 @@ export function resolvePathname(host: string, path: string) {
   }
 }
 
-export function prepareHeaders(headers: Record<string, unknown> = {}, auth: BasicAuth) {
-  if (auth != null && headers.authorization == null && auth.username && auth.password) {
-    headers.authorization =
-      "Basic " + Buffer.from(`${auth.username}:${auth.password}`).toString("base64");
+// export function prepareHeaders(headers: Record<string, unknown> = {}, auth?: BasicAuth) {
+//   if (auth != null && headers.authorization == null && auth.username && auth.password) {
+//     headers.authorization =
+//       "Basic " + Buffer.from(`${auth.username}:${auth.password}`).toString("base64");
+//   }
+//   return headers;
+// }
+export function prepareHeaders(
+  headers: IncomingHttpHeaders,
+  auth?: BasicAuth
+): IncomingHttpHeaders {
+  if (
+    auth != null &&
+    headers.authorization == null &&
+    auth.username != null &&
+    auth.password != null
+  ) {
+    const _auth = `${auth.username}:${auth.password}`;
+    const authBuffer = Buffer.from(_auth, "utf8");
+    headers.authorization = `Basic ${authBuffer.toString("base64")}`;
   }
   return headers;
 }

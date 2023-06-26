@@ -27,9 +27,9 @@
  * under the License.
  */
 
-import Debug from "debug";
+import createDebug from "debug"
 import BaseConnectionPool from "./base-connection-pool";
 
-const debug = Debug("opensearch:pool:cloud-connection");
+const debug = createDebug("opensearch:pool:cloud-connection");
 
 export class CloudConnectionPool extends BaseConnectionPool {}

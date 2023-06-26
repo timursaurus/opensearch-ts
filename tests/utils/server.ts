@@ -35,8 +35,8 @@ import http from "node:http";
 
 import stoppable, { StoppableServer } from "stoppable";
 
-import Debug from "debug";
-const debug = Debug("opensearch:test");
+import createDebug from "debug";
+const debug = createDebug("opensearch:test");
 
 /** allow self signed certificates for testing purposes */
 // @ts-ignore
@@ -47,10 +47,6 @@ const secureOptions = {
   cert: readFileSync(new URL(path.join("..", "fixtures", "https.cert"), import.meta.url), "utf8"),
 };
 
-let id = 0;
-
-export type ServiceHandler = (req: http.IncomingMessage, res: http.ServerResponse) => void;
-
 export interface ServerOptions {
   secure?: boolean;
 }
@@ -58,6 +54,7 @@ export interface ServerOptions {
 export type ServerHandler = (req: http.IncomingMessage, res: http.ServerResponse) => void;
 export type Server = [{ port: number }, StoppableServer];
 
+let id = 0;
 export function buildServer(handler: ServerHandler, options: ServerOptions = {}): Promise<Server> {
   const serverId = id++;
   debug(`Booting server '${serverId}'`);
@@ -66,7 +63,10 @@ export function buildServer(handler: ServerHandler, options: ServerOptions = {})
     ? stoppable(https.createServer(secureOptions))
     : stoppable(http.createServer());
 
-  server.on("request", handler);
+  server.on("request", (req, res) => {
+    debug(`Server '${serverId}' received request: ${req.method} ${req.url}`);
+    handler(req, res);
+  });
 
   server.on("error", (err: Error) => {
     console.log("http server error", err);
@@ -81,6 +81,8 @@ export function buildServer(handler: ServerHandler, options: ServerOptions = {})
       }
       const port = address.port;
       debug(`Server '${serverId}' booted on port ${port}`);
+      // throw new Error("Not implemented");
+
       resolve([Object.assign({}, secureOptions, { port }), server]);
     });
   });
