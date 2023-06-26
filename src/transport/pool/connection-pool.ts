@@ -28,7 +28,7 @@
  */
 
 import assert from "node:assert";
-import Debug from "debug";
+import createDebug from "debug"
 
 import { BaseConnectionPool } from "@/transport/pool";
 import { Connection } from "@/transport";
@@ -42,7 +42,7 @@ import type {
   ResurrectOptions,
 } from "@/types/pool";
 
-const debug = Debug("opensearch:pool:connection");
+const debug = createDebug("opensearch:pool:connection");
 
 export class ConnectionPool extends BaseConnectionPool {
   static resurrectStrategies: {

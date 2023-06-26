@@ -34,7 +34,7 @@ import { inspect } from "node:util";
 import { pipeline } from "node:stream";
 import type { ConnectionOptions as TLSConnectionOptions } from "node:tls";
 
-import Debug from "debug";
+import createDebug from "debug";
 import hpagent from "hpagent";
 
 import type {
@@ -46,7 +46,7 @@ import type {
 import { ConfigurationError, ConnectionError, RequestAbortedError, TimeoutError } from "@/errors";
 import { isStream, NOOP, prepareHeaders, resolvePathname, stripAuth } from "@/utils";
 
-const debug = Debug("opensearch:transport:connection");
+const debug = createDebug("opensearch:transport:connection");
 const INVALID_PATH_REGEX = /[^\u0021-\u00FF]/;
 export class Connection {
   url: URL;
@@ -85,20 +85,20 @@ export class Connection {
     this.deadCount = 0;
     this.resurrectTimeout = 0;
     this._openRequests = 0;
-    this._status = options.status ?? Connection.statuses.ALIVE;
+    this._status = options.status || Connection.statuses.ALIVE;
     this.roles = Object.assign({}, defaultRoles, options.roles);
-    this.makeRequest = this.url.protocol === "http:" ? http.request : https.request;
 
     if (!["http:", "https:"].includes(this.url.protocol)) {
       throw new ConfigurationError(`Invalid protocol: '${this.url.protocol}'`);
     }
+    const isHttp = this.url.protocol === "http:";
 
     if (typeof options.agent === "function") {
       this.agent = options.agent(options);
     } else if (options.agent === false) {
       this.agent = undefined;
     } else {
-      const _agentOptions = Object.assign(
+      const agentOptions = Object.assign(
         {},
         {
           keepAlive: true,
@@ -109,20 +109,21 @@ export class Connection {
         },
         options.agent
       ) as hpagent.HttpProxyAgentOptions;
-      if (options.proxy) {
-        _agentOptions.proxy = options.proxy;
 
-        this.agent =
-          this.url.protocol === "http:"
-            ? new hpagent.HttpProxyAgent(_agentOptions)
-            : new hpagent.HttpsProxyAgent(Object.assign({}, _agentOptions, this.ssl));
+      if (options.proxy) {
+        agentOptions.proxy = options.proxy;
+
+        this.agent = isHttp
+          ? new hpagent.HttpProxyAgent(agentOptions)
+          : new hpagent.HttpsProxyAgent(Object.assign({}, agentOptions, this.ssl));
       } else {
-        this.agent =
-          this.url.protocol === "http:"
-            ? new http.Agent(_agentOptions)
-            : new https.Agent(Object.assign({}, _agentOptions, this.ssl));
+        this.agent = isHttp
+          ? new http.Agent(agentOptions)
+          : new https.Agent(Object.assign({}, agentOptions, this.ssl));
       }
     }
+
+    this.makeRequest = isHttp ? http.request : https.request;
   }
 
   close(callback = NOOP) {
@@ -157,18 +158,17 @@ export class Connection {
     for (let i = 0, len = paramsKeys.length; i < len; i++) {
       const key = paramsKeys[i];
       if (key === "path") {
-        const _path = params[key] as string;
-        request.pathname = resolvePathname(request.pathname, _path);
-      } else if (key === "querystring" && !!params[key]) {
+        request.pathname = resolvePathname(request.pathname, params[key] as string);
+      } else if (key === "querystring" && Boolean(params[key])) {
         if (request.search === "") {
-          request.search = `?${params[key]}`;
+          request.search = "?" + params[key];
         } else {
-          request.search += `&${params[key]}`;
+          request.search += "&" + params[key];
         }
       } else if (key === "headers") {
         request.headers = Object.assign({}, request.headers, params.headers);
       } else {
-        // @ts-expect-error
+        // @ts-ignore
         request[key] = params[key];
       }
     }
@@ -180,17 +180,18 @@ export class Connection {
 
   request(
     params: ConnectionRequestParams,
-    callback: (err: Error | null, response: http.IncomingMessage | null) => void
+    callback: (err: Error | null, response: http.ServerResponse | null) => void
   ) {
     this._openRequests++;
     let cleanedListeners = false;
-    const _requestParams = this.buildRequestObject(params);
-    if (INVALID_PATH_REGEX.test(_requestParams.path as string)) {
-      callback(new TypeError(`ERR_UNESCAPED_CHARACTERS: ${_requestParams.path}`), null);
+    const requestParams = this.buildRequestObject(params);
+    if (INVALID_PATH_REGEX.test(requestParams.path as string) === true) {
+      callback(new TypeError(`ERR_UNESCAPED_CHARACTERS: ${requestParams.path}`), null);
       return { abort: NOOP };
     }
+
     debug("Starting a new request", params);
-    const _request = this.makeRequest(_requestParams);
+    const request = this.makeRequest(requestParams);
 
     const onResponse = (response: http.IncomingMessage) => {
       cleanListeners();
@@ -202,8 +203,8 @@ export class Connection {
       cleanListeners();
       debug("Request timed out", params);
       this._openRequests--;
-      _request.once("error", NOOP);
-      _request.abort();
+      request.once("error", NOOP);
+      request.abort();
       // TODO: This should be a TimeoutError
       // callback(new TimeoutError("Request timed out", params), null);
       callback(new TimeoutError("Request timed out"), null);
@@ -218,41 +219,42 @@ export class Connection {
 
     const onAbort = () => {
       cleanListeners();
-      _request.once("error", NOOP);
+      request.once("error", NOOP);
       debug("Request aborted", params);
       this._openRequests--;
       callback(new RequestAbortedError("Request aborted"), null);
     };
 
-    _request.on("response", onResponse);
-    _request.on("timeout", onTimeout);
-    _request.on("error", onError);
-    _request.on("abort", onAbort);
+    request.on("response", onResponse);
+    request.on("timeout", onTimeout);
+    request.on("error", onError);
+    request.on("abort", onAbort);
 
     // Disable Nagle's algorithm
-    _request.setNoDelay(true);
+    request.setNoDelay(true);
 
     if (isStream(params.body)) {
-      pipeline(params.body, _request, (err) => {
-        if (err != null && !cleanedListeners) {
+      pipeline(params.body, request, (err) => {
+        if (err != null && cleanedListeners === false) {
           cleanListeners();
           this._openRequests--;
           callback(err, null);
         }
       });
     } else {
-      _request.end(params.body);
+      request.end(params.body);
     }
-
-    return _request;
 
     function cleanListeners() {
-      _request.removeListener("response", onResponse);
-      _request.removeListener("timeout", onTimeout);
-      _request.removeListener("error", onError);
-      _request.removeListener("abort", onAbort);
+      request.removeListener("response", onResponse);
+      request.removeListener("timeout", onTimeout);
+      request.removeListener("error", onError);
+      request.removeListener("abort", onAbort);
       cleanedListeners = true;
     }
+    // console.log("request", request);
+
+    return request;
   }
 
   setRole(role: string, enabled: boolean) {

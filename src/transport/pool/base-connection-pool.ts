@@ -29,7 +29,7 @@
 
 import { URL } from "node:url";
 import type { SecureContextOptions, ConnectionOptions as TLSConnectionOptions } from "node:tls";
-import Debug from "debug";
+import createDebug from "debug"
 import { Connection } from "@/transport";
 
 import { NOOP } from "@/utils";
@@ -37,7 +37,7 @@ import { ConfigurationError } from "@/errors";
 import { AgentOptions, ConnectionOptions, ConnectionRoles } from "@/types/connection";
 import { BasicAuth } from "@/types/pool";
 
-const debug = Debug("opensearch:pool:base-connection");
+const debug = createDebug("opensearch:pool:base-connection");
 
 export interface BaseConnectionPoolOptions {
   ssl?: SecureContextOptions;
@@ -48,13 +48,11 @@ export interface BaseConnectionPoolOptions {
   Connection: typeof Connection;
 }
 
-export interface NodeSelectorFn {
-  (connections: Connection[]): Connection;
-}
+export type NodeSelectorFn = (connections: Connection[]) => Connection;
 
-export interface NodeFilterFn {
-  (connection: Connection): boolean;
-}
+export type NodeFilterFn = (connection: Connection) => boolean;
+
+export type GenerateRequestIdFn = () => number;
 
 export interface GetConnectionOptions {
   filter?: NodeFilterFn;
@@ -71,12 +69,15 @@ export class BaseConnectionPool {
   private _ssl?: SecureContextOptions;
   private _agent?: AgentOptions;
   private _proxy?: string | URL;
+  auth?: BasicAuth;
+  Connection: typeof Connection;
 
   constructor(options: BaseConnectionPoolOptions) {
     this.connections = [];
     this.size = this.connections.length;
     this.emit = options.emit ?? NOOP;
-
+    this.Connection = options.Connection;
+    this.auth = options.auth;
     this._ssl = options.ssl;
     this._agent = options.agent;
     this._proxy = options.proxy;
@@ -96,9 +97,77 @@ export class BaseConnectionPool {
     return this;
   }
 
-  createConnection(options) {}
+  /**
+   * Creates a new connection instance.
+   */
+  createConnection(options: ConnectionOptions | string) {
+    if (options instanceof Connection) {
+      throw new ConfigurationError("The argument provided is already a Connection instance.");
+    }
+    if (typeof options === "string") {
+      options = this.urlToHost(options);
+    }
 
-  addConnection(options: ConnectionOptions) {}
+    if (this.auth !== null) {
+      options.auth = this.auth;
+    } else if (options.url.username !== "" && options.url.password !== "") {
+      options.auth = {
+        username: decodeURIComponent(options.url.username),
+        password: decodeURIComponent(options.url.password),
+      };
+    }
+
+    if (options.ssl == null) {
+      options.ssl = this._ssl;
+    }
+
+    if (options.agent == null) {
+      options.agent = this._agent;
+    }
+
+    if (options.proxy == null) {
+      options.proxy = this._proxy;
+    }
+
+    const connection = new this.Connection(options);
+
+    for (const conn of this.connections) {
+      if (conn.id === connection.id) {
+        throw new Error(`Connection with id '${connection.id}' is already present`);
+      }
+    }
+
+    return connection;
+  }
+
+  addConnection(options: ConnectionOptions | ConnectionOptions[] | string) {
+    if (Array.isArray(options)) {
+      for (const o of options) {
+        this.addConnection(o);
+      }
+      return;
+    }
+    if (typeof options === "string") {
+      options = this.urlToHost(options);
+    }
+
+    const connectionId = options.id;
+    const connectionUrl = options.url.href;
+
+    if (connectionId || connectionUrl) {
+      const connectionById = this.connections.find((c) => c.id === connectionId);
+      const connectionByUrl = this.connections.find((c) => c.id === connectionUrl);
+
+      if (connectionById || connectionByUrl) {
+        throw new ConfigurationError(
+          `Connection with id '${connectionId || connectionUrl}' is already present`
+        );
+      }
+    }
+
+    this.update([...this.connections, options]);
+    return this.connections[this.size - 1];
+  }
 
   removeConnection(connection: Connection) {
     debug("Removing connection");
@@ -108,7 +177,50 @@ export class BaseConnectionPool {
     debug("Emptying the connection pool");
   }
 
-  update(nodes: Connection[]) {}
+  update(nodes: Connection[]) {
+    debug("Updating the connection pool");
+    const newConnections = [];
+    const oldConnections = [];
+
+    for (const node of nodes) {
+      // if we already have a given connection in the pool
+      // we mark it as alive and we do not close the connection
+      // to avoid socket issues
+      const connectionById = this.connections.find((c) => c.id === node.id);
+      const connectionByUrl = this.connections.find((c) => c.id === node.url.href);
+      if (connectionById) {
+        debug(`The connection with id '${node.id}' is already present`);
+        this.markAlive(connectionById);
+        newConnections.push(connectionById);
+        // in case the user has passed a single url (or an array of urls),
+        // the connection id will be the full href; to avoid closing valid connections
+        // because are not present in the pool, we check also the node url,
+        // and if is already present we update its id with the opensearch provided one.
+      } else if (connectionByUrl) {
+        connectionByUrl.id = node.id;
+        this.markAlive(connectionByUrl);
+        newConnections.push(connectionByUrl);
+      } else {
+        newConnections.push(this.createConnection(node));
+      }
+    }
+
+    const ids = nodes.map((c) => c.id);
+    // remove all the dead connections and old connections
+    for (const connection of this.connections) {
+      if (ids.indexOf(connection.id) === -1) {
+        oldConnections.push(connection);
+      }
+    }
+
+    // close old connections
+    oldConnections.forEach((connection) => connection.close());
+
+    this.connections = newConnections;
+    this.size = this.connections.length;
+
+    return this;
+  }
 
   nodesToHost(nodes: Connection[], protocol) {}
 

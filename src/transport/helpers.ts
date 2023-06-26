@@ -56,4 +56,5 @@ export class Helpers {
 
   bulk<TDocument = unknown>(options, requestOptions): BulkHelper<BulkStats> {}
 }
+
 export default Helpers;

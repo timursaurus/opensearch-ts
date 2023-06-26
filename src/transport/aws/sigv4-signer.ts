@@ -27,42 +27,114 @@
  * under the License.
  */
 
-import crypto from "node:crypto";
-import { SignatureV4 } from '@aws-sdk/signature-v4'
-import { Sha256 } from '@aws-crypto/sha256-js'
+import type { ClientRequestArgs } from "node:http";
+import { SignatureV4 } from "@aws-sdk/signature-v4";
+import { HttpRequest } from "@aws-sdk/protocol-http";
+import { Sha256 } from "@aws-crypto/sha256-js";
+import type {
+  AWSProvider,
+  AwsSigv4SignerOptions,
+  DefaultAWSCredentialsProvider,
+} from "@/types/aws";
 import { OpenSearchClientError } from "@/errors";
-import type { AwsSigv4SignerOptions } from "@/types/aws";
-import { Connection  } from '@/transport'
+import { Connection, Transport } from "@/transport";
+import { ConnectionRequestParams } from "@/types/connection";
 
-// <
-//   TResponse = Record<string, unknown>,
-//   TContext = Context
-// >
+class Sigv4SignerTransport extends Transport {}
+
+class Sigv4SignerConnection extends Connection {
+  buildRequestObject(params: ConnectionRequestParams) {
+    const request = super.buildRequestObject(params);
+    // return buildSignedRequestObject(request);
+  }
+}
+
 export class AwsSigv4SignerError extends OpenSearchClientError {
   message: string;
   data;
-  constructor(message: string, data?: string) {
+  constructor(message = "AwsSigv4Signer Error", data?: string) {
     super(message);
     Error.captureStackTrace(this, AwsSigv4SignerError);
     this.name = "AwsSigv4SignerError";
-    this.message = message ?? "AwsSigv4Signer Error";
+    this.message = message;
     this.data = data;
   }
 }
 
-export function AwsSigv4Signer(options: AwsSigv4SignerOptions) {
+async function getSDKCredentialsProvider(): Promise<DefaultAWSCredentialsProvider> {
+  try {
+    const awsV3 = await import("@aws-sdk/credential-provider-node");
+    if (typeof awsV3?.defaultProvider === "function") {
+      return awsV3.defaultProvider();
+    }
+  } catch {}
+  try {
+    const awsV2 = await import("aws-sdk");
+    if (typeof awsV2?.default.config.getCredentials === "function") {
+      return new Promise((resolve, reject) => {
+        awsV2.default.config.getCredentials((error, credentials) => {
+          if (error) {
+            reject(error);
+          }
+          if (credentials) {
+            resolve(credentials);
+          }
+        });
+      });
+    }
+  } catch {}
+
+  throw new AwsSigv4SignerError(
+    "Unable to find a valid AWS SDK, please provide a valid getCredentials function to AwsSigv4Signer options."
+  );
+}
+
+function defaultCredentialsProvider(): Promise<DefaultAWSCredentialsProvider> {
+  return new Promise((resolve, reject) => {
+    getSDKCredentialsProvider()
+      .then((provider) => {
+        if (typeof provider === "function") {
+          provider().then(resolve).catch(reject);
+        }
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+}
+
+export async function AwsSigv4Signer(options: AwsSigv4SignerOptions) {
   if (!options.region) {
     throw new AwsSigv4SignerError("Region cannot be empty");
   }
+  if (typeof options.getCredentials !== "function") {
+    options.getCredentials = defaultCredentialsProvider as AWSProvider;
+  }
+
+  const credentialsState = {
+    credentials: null,
+  };
+
+  const signer = new SignatureV4({
+    service: options.service || "es",
+    region: options.region,
+    sha256: Sha256,
+    credentials: await options.getCredentials(),
+  });
+
+  async function buildSignedRequestObject(request = {}) {
+    const req = new HttpRequest({
+      ...request,
+    });
+
+    const signed = await signer.sign(req);
+
+    return signed;
+  }
+
+  return {
+    Connection: Sigv4SignerConnection,
+    Transport: Sigv4SignerTransport,
+    buildSignedRequestObject,
+  };
 }
-
-// function buildSignedRequestObject(request) {
-//   const sigv4 = new SignatureV4({
-//     region: 'us-east-1'
-//     service: 'es',
-//     sha256: Sha256,
-//     credentials: {
-
-//     }
-//   })
-// }
