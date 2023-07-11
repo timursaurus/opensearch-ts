@@ -46,10 +46,10 @@ const HEAP_SIZE_LIMIT = v8.getHeapStatistics().heap_size_limit;
 
 export class Transport {
   static sniffReasons: {
-    SNIFF_ON_START: string;
-    SNIFF_INTERVAL: string;
-    SNIFF_ON_CONNECTION_FAULT: string;
-    DEFAULT: string;
+    SNIFF_ON_START: 'sniff-on-start';
+    SNIFF_INTERVAL: 'sniff-interval';
+    SNIFF_ON_CONNECTION_FAULT: 'sniff-on-connection-fault';
+    DEFAULT: 'default';
   };
 
   emit: (event: string | symbol, ...args: any[]) => boolean;
