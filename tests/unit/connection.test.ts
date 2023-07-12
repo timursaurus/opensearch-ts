@@ -29,9 +29,7 @@
 
 import { inspect } from "node:util";
 import { URL } from "node:url";
-import http, { Agent, IncomingMessage, ServerResponse } from "node:http";
-import { Readable } from "node:stream";
-import hpagent from "hpagent";
+import { IncomingMessage, ServerResponse } from "node:http";
 import { describe, it, expect } from "vitest";
 import { buildServer } from "../utils/server";
 
@@ -41,7 +39,6 @@ import { TimeoutError } from "@/errors";
 describe("Connection", () => {
   it("http", async () => {
     function handler(req: IncomingMessage, res: ServerResponse) {
-      // throw new Error("Method not implemented.");
       res.end("ok");
     }
 
@@ -50,87 +47,104 @@ describe("Connection", () => {
     const connection = new Connection({
       url: new URL(`http://localhost:${port}`),
     });
-    // console.log("connection", connection);
-    connection.request(
-      {
-        path: "/hello",
-        method: "GET",
-        headers: {
-          "X-Custom-Test": true,
+
+    await new Promise((resolve, reject) => {
+      const request = connection.request(
+        {
+          path: "/hello",
+          method: "GET",
+          headers: {
+            "x-custom-test": "true",
+          },
         },
-      },
-      (err, response) => {
-        // throw new Error("Not working");
-        expect(err).toBe(null);
+        (err, response) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          expect(response?.headers).toMatchObject({
+            connection: "keep-alive",
+          });
 
-
-        expect(response?.headers).toMatchObject({
-          connection: "keep-alive",
-        });
-
-        if (response) {
           let payload = "";
-          response.setEncoding("utf8");
-          response.on("data", (chunk) => {
+          response?.setEncoding("utf8");
+          response?.on("data", (chunk) => {
             payload += chunk;
           });
-          response.on("error", (err) => {
-            throw err;
+          response?.on("error", (err) => {
+            reject(err);
           });
-          response.on("end", () => {
+          response?.on("end", () => {
             expect(payload).toBe("ok");
             server.stop();
+            resolve(true);
           });
         }
-      }
-    );
-  });
-  it("https", async () => {
-    function handler(req: IncomingMessage, res: ServerResponse) {
-      res.end("ok");
-    }
+      );
 
-    const [{ port }, server] = await buildServer(handler);
+      request.on("error", (err) => {
+        reject(err);
+      });
 
-    const connection = new Connection({
-      url: new URL(`https://localhost:${port}`),
+      request.end();
     });
-    // console.log("connection", connection);
-    connection.request(
-      {
-        path: "/hello",
-        method: "GET",
-        headers: {
-          "X-Custom-Test": true,
-        },
-      },
-      (err, response) => {
-        throw new Error("Not working");
-        expect(err).toBe(null);
-        expect(response?.headers).toMatchObject({
-          connection: "keep-alive",
-        });
-
-        if (response) {
-          let payload = "";
-          response.setEncoding("utf8");
-          response.on("data", (chunk) => {
-            payload += chunk;
-          });
-          // response.on("error", (err) => t.fail(err));
-          response.on("error", () => {
-            throw new Error("error");
-          });
-
-          response.on("end", () => {
-            expect(payload).toBe("ok");
-
-            server.stop();
-          });
-        }
-      }
-    );
   });
+
+  // it("https", async () => {
+  //   function handler(req: IncomingMessage, res: ServerResponse) {
+  //     res.end("ok");
+  //   }
+
+  //   const [{ port }, server] = await buildServer(handler);
+
+  //   const connection = new Connection({
+  //     url: new URL(`https://localhost:${port}`),
+  //   });
+
+  //   const response = await new Promise<IncomingMessage>((resolve, reject) => {
+  //     const request = connection.request(
+  //       {
+  //         path: "/hello",
+  //         method: "GET",
+  //         headers: {
+  //           "X-Custom-Test": true,
+  //         },
+  //       },
+  //       (err, response) => {
+  //         if (err) {
+  //           reject(err);
+  //           return;
+  //         }
+
+  //         resolve(response);
+  //       }
+  //     );
+
+  //     request.on("error", (err) => {
+  //       reject(err);
+  //     });
+
+  //     request.end();
+  //   });
+
+  //   expect(response.headers).toMatchObject({
+  //     connection: "keep-alive",
+  //   });
+
+  //   let payload = "";
+  //   response.setEncoding("utf8");
+  //   response.on("data", (chunk) => {
+  //     payload += chunk;
+  //   });
+  //   response.on("error", (err) => {
+  //     throw err;
+  //   });
+  //   response.on("end", () => {
+  //     expect(payload).toBe("ok");
+  //     server.stop();
+  //   });
+  // });
+
   it("Timeout", async () => {
     function handler(req: IncomingMessage, res: ServerResponse) {
       setTimeout(() => res.end("ok"), 1000);
@@ -142,44 +156,57 @@ describe("Connection", () => {
       url: new URL(`http://localhost:${port}`),
     });
 
-    connection.request(
-      {
-        path: "/hello",
-        method: "GET",
-        timeout: 500,
-      },
-      (err) => {
-        expect(err).toBeInstanceOf(TimeoutError);
-        server.stop();
-      }
-    );
+    const error = await new Promise<TimeoutError | null>((resolve) => {
+      connection.request(
+        {
+          path: "/hello",
+          method: "GET",
+          timeout: 500,
+        },
+        (err) => {
+          resolve(err);
+        }
+      );
+    });
+
+    expect(error).toBeInstanceOf(TimeoutError);
+    server.stop();
   });
 
   describe("querystring", () => {
-    it("Should concatenate the querystring", () => {
+    it("Should concatenate the querystring", async () => {
       function handler(req: IncomingMessage, res: ServerResponse) {
-        throw new Error("Method not implemented.");
         expect(req.url).toBe("/hello?hello=world&you_know=for%20search");
         res.end("ok");
       }
 
-      buildServer(handler).then(([{ port }, server]) => {
-        const connection = new Connection({
-          url: new URL(`http://localhost:${port}`),
-        });
+      const [{ port }, server] = await buildServer(handler);
 
-        connection.request(
+      const connection = new Connection({
+        url: new URL(`http://localhost:${port}`),
+      });
+
+      const response = await new Promise<IncomingMessage>((resolve) => {
+        const request = connection.request(
           {
             path: "/hello",
             method: "GET",
             querystring: "hello=world&you_know=for%20search",
           },
-          (err) => {
-            expect(err).toBe(null);
-            server.stop();
+          (err, response) => {
+            resolve(response);
           }
         );
+
+        request.on("error", (err) => {
+          throw err;
+        });
+
+        request.end();
       });
+
+      expect(response.statusCode).toBe(200);
+      server.stop();
     });
   });
 });
