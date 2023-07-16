@@ -178,16 +178,17 @@ export class Connection {
     return request;
   }
 
+
   request(
     params: ConnectionRequestParams,
-    callback: (err: Error | null, response: http.ServerResponse | null) => void
-  ) {
+    callback: (err: Error | null, response: http.IncomingMessage | null) => void
+  ): http.ClientRequest {
     this._openRequests++;
     let cleanedListeners = false;
     const requestParams = this.buildRequestObject(params);
     if (INVALID_PATH_REGEX.test(requestParams.path as string) === true) {
       callback(new TypeError(`ERR_UNESCAPED_CHARACTERS: ${requestParams.path}`), null);
-      return { abort: NOOP };
+      return { abort: NOOP } as http.ClientRequest;
     }
 
     debug("Starting a new request", params);
@@ -205,8 +206,6 @@ export class Connection {
       this._openRequests--;
       request.once("error", NOOP);
       request.abort();
-      // TODO: This should be a TimeoutError
-      // callback(new TimeoutError("Request timed out", params), null);
       callback(new TimeoutError("Request timed out"), null);
     };
 

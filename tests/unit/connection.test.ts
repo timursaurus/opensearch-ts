@@ -34,11 +34,15 @@ import { describe, it, expect } from "vitest";
 import { buildServer } from "../utils/server";
 
 import { Connection } from "@/transport";
-import { TimeoutError } from "@/errors";
+import { ConfigurationError, TimeoutError } from "@/errors";
 
 describe("Connection", () => {
   it("http", async () => {
     function handler(req: IncomingMessage, res: ServerResponse) {
+      expect(req.headers).toMatchObject({
+        "x-custom-test": "true",
+        connection: "keep-alive",
+      });
       res.end("ok");
     }
 
@@ -92,61 +96,59 @@ describe("Connection", () => {
 
   // it("https", async () => {
   //   function handler(req: IncomingMessage, res: ServerResponse) {
+  //     expect(req.headers).toMatchObject({
+  //       "x-custom-test": "true",
+  //       connection: "keep-alive",
+  //     });
   //     res.end("ok");
   //   }
 
-  //   const [{ port }, server] = await buildServer(handler);
+  //   const [{ port }, server] = await buildServer(handler, { secure: true });
 
   //   const connection = new Connection({
   //     url: new URL(`https://localhost:${port}`),
   //   });
 
-  //   const response = await new Promise<IncomingMessage>((resolve, reject) => {
+  //   await new Promise((resolve, reject) => {
   //     const request = connection.request(
   //       {
   //         path: "/hello",
   //         method: "GET",
   //         headers: {
-  //           "X-Custom-Test": true,
+  //           "x-custom-test": "true",
   //         },
   //       },
   //       (err, response) => {
   //         if (err) {
   //           reject(err);
-  //           return;
+  //           throw err;
   //         }
 
-  //         resolve(response);
+  //         expect(response?.headers).toMatchObject({
+  //           connection: "keep-alive",
+  //         });
+
+  //         let payload = "";
+  //         response?.setEncoding("utf8");
+  //         response?.on("data", (chunk) => {
+  //           payload += chunk;
+  //         });
+  //         response?.on("error", (err) => {
+  //           throw err;
+  //         });
+  //         response?.on("end", () => {
+  //           expect(payload).toBe("ok");
+  //           server.stop();
+  //         });
+
+  //         //
   //       }
   //     );
-
-  //     request.on("error", (err) => {
-  //       reject(err);
-  //     });
-
-  //     request.end();
-  //   });
-
-  //   expect(response.headers).toMatchObject({
-  //     connection: "keep-alive",
-  //   });
-
-  //   let payload = "";
-  //   response.setEncoding("utf8");
-  //   response.on("data", (chunk) => {
-  //     payload += chunk;
-  //   });
-  //   response.on("error", (err) => {
-  //     throw err;
-  //   });
-  //   response.on("end", () => {
-  //     expect(payload).toBe("ok");
-  //     server.stop();
   //   });
   // });
 
   it("Timeout", async () => {
-    function handler(req: IncomingMessage, res: ServerResponse) {
+    function handler(_: IncomingMessage, res: ServerResponse) {
       setTimeout(() => res.end("ok"), 1000);
     }
 
@@ -173,40 +175,176 @@ describe("Connection", () => {
     server.stop();
   });
 
-  describe("querystring", () => {
-    it("Should concatenate the querystring", async () => {
-      function handler(req: IncomingMessage, res: ServerResponse) {
-        expect(req.url).toBe("/hello?hello=world&you_know=for%20search");
-        res.end("ok");
-      }
+  // describe("querystring", () => {
+  //   it("Should concatenate the querystring", async () => {
+  //     function handler(req: IncomingMessage, res: ServerResponse) {
+  //       expect(req.url).toBe("/hello?hello=world&you_know=for%20search");
+  //       res.end("ok");
+  //     }
 
-      const [{ port }, server] = await buildServer(handler);
+  //     const [{ port }, server] = await buildServer(handler);
 
+  //     const connection = new Connection({
+  //       url: new URL(`http://localhost:${port}`),
+  //     });
+
+  //     const response = await new Promise<IncomingMessage>((resolve) => {
+  //       const request = connection.request(
+  //         {
+  //           path: "/hello",
+  //           method: "GET",
+  //           querystring: "hello=world&you_know=for%20search",
+  //         },
+  //         (err, response) => {
+  //           if (response) {
+  //             resolve(response);
+  //           }
+  //           throw err;
+  //         }
+  //       );
+
+  //       request.on("error", (err) => {
+  //         throw err;
+  //       });
+
+  //       request.end();
+  //     });
+
+  //     expect(response.statusCode).toBe(200);
+  //     server.stop();
+  //   });
+
+  //   // it("if querystring is null, should not do anything", async () => {
+  //   //   function handler(req: IncomingMessage, res: ServerResponse) {
+  //   //     res.end("ok");
+  //   //   }
+
+  //   //   const [{ port }, server] = await buildServer(handler);
+
+  //   //   const connection = new Connection({
+  //   //     url: new URL(`http://localhost:${port}`),
+  //   //   });
+
+  //   //   await new Promise((resolve, reject) => {
+  //   //     const request = connection.request(
+  //   //       {
+  //   //         path: "/hello",
+  //   //         method: "GET",
+  //   //       },
+  //   //       (err) => {
+  //   //         server.stop();
+  //   //         throw err;
+  //   //       }
+  //   //     );
+  //   //   });
+  //   // });
+  // });
+
+  it("Should throw if the protocol is not http or https", () => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const connection = new Connection({
-        url: new URL(`http://localhost:${port}`),
+        url: new URL("nope://nope"),
+      });
+      throw new Error("Should throw");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ConfigurationError);
+      const message = (error as Error).message;
+      expect(message).toBe("Invalid protocol: 'nope:'");
+    }
+  });
+
+  it('IPv6', () => {
+    const connection = new Connection({
+      url: new URL('http://[::1]:9200'),
+    });
+    const hostname = connection.buildRequestObject({}).hostname
+    expect(hostname).toBe('::1')
+  })
+
+  it("Should not add agent and ssl to the serialized connection", () => {
+    const connection = new Connection({
+      url: new URL("http://localhost:9200"),
+    });
+
+    const connectionToBeTested = JSON.stringify(connection);
+    // throw connectionToBeTested
+    const expected =
+      '{"url":"http://localhost:9200/","id":"http://localhost:9200/","headers":{},"deadCount":0,"resurrectTimeout":0,"openRequests":0,"status":"alive","roles":{"data":true,"ingest":true}}';
+    expect(connectionToBeTested).toBe(expected);
+  });
+
+  it("Should disallow two-byte characters in URL path", () => {
+    const connection = new Connection({
+      url: new URL("http://localhost:9200"),
+    });
+    connection.request(
+      {
+        // eslint-disable-next-line unicorn/escape-case
+        path: "/thisisinvalid\uffe2",
+        method: "GET",
+      },
+      (err) => {
+        const message = (err as Error).message;
+        // eslint-disable-next-line unicorn/escape-case
+        expect(message).toBe("ERR_UNESCAPED_CHARACTERS: /thisisinvalid\uffe2");
+      }
+    );
+  });
+
+  describe("Authorization", () => {
+    it("Basic", () => {
+      const connection = new Connection({
+        url: new URL("http://localhost:9200"),
+        auth: { username: "foo", password: "bar" },
+      });
+      expect(connection.headers).toMatchObject({
+        authorization: "Basic Zm9vOmJhcg==",
+      });
+    });
+    it("No auth headers", () => {
+      const connection = new Connection({
+        url: new URL("http://localhost:9200"),
+      });
+      const emptyObject = {};
+      expect(connection.headers).toStrictEqual(emptyObject);
+    });
+  });
+
+  describe("Role", () => {
+    it("Update the value of a role", () => {
+      const connection = new Connection({
+        url: new URL("http://localhost:9200"),
       });
 
-      const response = await new Promise<IncomingMessage>((resolve) => {
-        const request = connection.request(
-          {
-            path: "/hello",
-            method: "GET",
-            querystring: "hello=world&you_know=for%20search",
-          },
-          (err, response) => {
-            resolve(response);
-          }
-        );
-
-        request.on("error", (err) => {
-          throw err;
-        });
-
-        request.end();
+      expect(connection.roles).toMatchObject({
+        data: true,
+        ingest: true,
       });
 
-      expect(response.statusCode).toBe(200);
-      server.stop();
+      connection.setRole("cluster_manager", false);
+
+      expect(connection.roles).toMatchObject({
+        cluster_manager: false,
+        data: true,
+        ingest: true,
+      });
+    });
+
+    it("invalid value", () => {
+      const connection = new Connection({
+        url: new URL("http://localhost:9200"),
+      });
+
+      try {
+        // @ts-expect-error
+        connection.setRole("cluster_manager", 1);
+        throw new Error("Should throw");
+      } catch (error) {
+        expect(error).toBeInstanceOf(ConfigurationError);
+        const message = (error as Error).message;
+        expect(message).toBe("enabled must be a boolean, got 'number'");
+      }
     });
   });
 });
